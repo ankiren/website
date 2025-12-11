@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Changed
+- Update README.md with project documentation
+
 ## 0.2.0 - 2025-12-11
 
 ### Added
