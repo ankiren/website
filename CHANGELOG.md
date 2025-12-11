@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- US-1.4: Login with Google user story
+- Project management workflow documentation (Jira agile workflows)
+
 ## 0.2.1 - 2025-12-11
 
 ### Added
