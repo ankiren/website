@@ -22,9 +22,11 @@ export default function DashboardPage() {
     try {
       const response = await fetch("/api/decks");
       const data = await response.json();
-      setDecks(data);
+      // Ensure data is an array before setting
+      setDecks(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Failed to fetch decks:", error);
+      setDecks([]);
     } finally {
       setLoading(false);
     }

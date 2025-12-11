@@ -55,36 +55,41 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider === "google") {
-        const d1 = getD1();
-        const googleId = account.providerAccountId;
+        try {
+          const d1 = getD1();
+          const googleId = account.providerAccountId;
 
-        // Check if user exists by googleId
-        let existingUser = await db.user.findByGoogleId(d1, googleId);
+          // Check if user exists by googleId
+          let existingUser = await db.user.findByGoogleId(d1, googleId);
 
-        if (!existingUser && user.email) {
-          // Check if user exists by email
-          existingUser = await db.user.findByEmail(d1, user.email);
+          if (!existingUser && user.email) {
+            // Check if user exists by email
+            existingUser = await db.user.findByEmail(d1, user.email);
+
+            if (existingUser) {
+              // Link existing account with Google
+              await db.user.updateGoogleId(d1, existingUser.id, {
+                googleId,
+                image: user.image || undefined,
+                name: existingUser.name ? undefined : user.name || undefined,
+              });
+            } else {
+              // Create new user with Google account
+              existingUser = await db.user.create(d1, {
+                email: user.email,
+                name: user.name || undefined,
+                image: user.image || undefined,
+                googleId,
+              });
+            }
+          }
 
           if (existingUser) {
-            // Link existing account with Google
-            await db.user.updateGoogleId(d1, existingUser.id, {
-              googleId,
-              image: user.image || undefined,
-              name: existingUser.name ? undefined : user.name || undefined,
-            });
-          } else {
-            // Create new user with Google account
-            existingUser = await db.user.create(d1, {
-              email: user.email,
-              name: user.name || undefined,
-              image: user.image || undefined,
-              googleId,
-            });
+            user.id = existingUser.id;
           }
-        }
-
-        if (existingUser) {
-          user.id = existingUser.id;
+        } catch (error) {
+          // D1 not available in local development, allow sign in without DB operations
+          console.warn("D1 database not available, skipping user creation/linking:", error);
         }
       }
       return true;

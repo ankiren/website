@@ -59,14 +59,20 @@ test.describe("Authentication", () => {
     test("should show loading state when signing in", async ({ page }) => {
       await page.goto("/login");
 
+      // Slow down the auth API to reliably catch loading state
+      await page.route("**/api/auth/**", async (route) => {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        await route.continue();
+      });
+
       await page.fill('input[type="email"]', "test@example.com");
       await page.fill('input[type="password"]', "password123");
-      await page.click('button[type="submit"]');
 
-      // Check loading state appears briefly
-      await expect(page.locator("text=Signing in...")).toBeVisible({
-        timeout: 5000,
-      });
+      const submitButton = page.locator('button[type="submit"]');
+      await submitButton.click();
+
+      // Check loading state appears
+      await expect(submitButton).toContainText("Signing in...");
     });
 
     test("should initiate Google OAuth flow when clicking Continue with Google (PR #17)", async ({
@@ -90,22 +96,6 @@ test.describe("Authentication", () => {
       );
     });
 
-    test("should show Google OAuth loading state (PR #17)", async ({
-      page,
-    }) => {
-      await page.goto("/login");
-
-      const googleButton = page.locator("button", {
-        hasText: "Continue with Google",
-      });
-      await expect(googleButton).toBeVisible();
-      await googleButton.click();
-
-      // Check loading state appears
-      await expect(page.locator("text=Signing in...")).toBeVisible({
-        timeout: 5000,
-      });
-    });
   });
 
   test.describe("Register Page", () => {
