@@ -18,6 +18,7 @@ binding = "ASSETS"
 [vars]
 NEXTAUTH_URL = "https://ankiren.com"
 ENVIRONMENT = "production"
+AUTH_TRUST_HOST = "true"
 # NEXTAUTH_SECRET should be set via wrangler secret
 
 # D1 Database binding (Production)
@@ -39,6 +40,7 @@ routes = [
 [env.staging.vars]
 NEXTAUTH_URL = "https://staging.ankiren.com"
 ENVIRONMENT = "staging"
+AUTH_TRUST_HOST = "true"
 
 [[env.staging.d1_databases]]
 binding = "DB"
@@ -58,6 +60,7 @@ routes = [
 [env.uat.vars]
 NEXTAUTH_URL = "https://uat.ankiren.com"
 ENVIRONMENT = "uat"
+AUTH_TRUST_HOST = "true"
 
 [[env.uat.d1_databases]]
 binding = "DB"
