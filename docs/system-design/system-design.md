@@ -102,8 +102,10 @@ User Request (ankiren.com)
 ├─────────────────┼─────────────────┼─────────────────────────────────┤
 │ id              │ TEXT (PK)       │ CUID identifier                 │
 │ email           │ TEXT (UNIQUE)   │ User email                      │
-│ password        │ TEXT            │ bcrypt hashed password          │
+│ password        │ TEXT (NULLABLE) │ bcrypt hashed (null for OAuth)  │
 │ name            │ TEXT            │ Display name                    │
+│ image           │ TEXT            │ Profile picture URL (OAuth)     │
+│ googleId        │ TEXT (UNIQUE)   │ Google OAuth provider ID        │
 │ createdAt       │ TEXT            │ ISO timestamp                   │
 │ updatedAt       │ TEXT            │ ISO timestamp                   │
 └─────────────────┴─────────────────┴─────────────────────────────────┘
@@ -148,6 +150,7 @@ User Request (ankiren.com)
 ### 3.3 Database Indexes
 
 ```sql
+CREATE INDEX idx_user_googleId ON User(googleId);
 CREATE INDEX idx_deck_userId ON Deck(userId);
 CREATE INDEX idx_card_deckId ON Card(deckId);
 CREATE INDEX idx_review_cardId ON Review(cardId);
@@ -200,24 +203,41 @@ src/
 
 ### 4.2 Authentication Flow
 
+> **Detailed documentation:** See [auth.md](./auth.md) for comprehensive authentication design.
+
 ```
-┌─────────┐     ┌─────────────┐     ┌─────────────┐     ┌──────────┐
-│  User   │────▶│   Login     │────▶│  NextAuth   │────▶│ D1 Query │
-│         │     │   Page      │     │  Verify     │     │  Lookup  │
-└─────────┘     └─────────────┘     └─────────────┘     └──────────┘
-                                          │
-                                          ▼
-                                   ┌─────────────┐
-                                   │  JWT Token  │
-                                   │  (Session)  │
-                                   └─────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                      Authentication Providers                            │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  ┌─────────────────────────┐     ┌─────────────────────────┐           │
+│  │   Credentials Provider  │     │   Google OAuth Provider │           │
+│  │   (Email/Password)      │     │   (accounts.google.com) │           │
+│  └───────────┬─────────────┘     └───────────┬─────────────┘           │
+│              │                               │                          │
+│              └───────────────┬───────────────┘                          │
+│                              ▼                                          │
+│                     ┌─────────────────┐                                 │
+│                     │   NextAuth.js   │                                 │
+│                     │   (JWT Session) │                                 │
+│                     └─────────────────┘                                 │
+│                              │                                          │
+│              ┌───────────────┼───────────────┐                          │
+│              ▼               ▼               ▼                          │
+│     ┌──────────────┐ ┌──────────────┐ ┌──────────────┐                 │
+│     │ Find by      │ │ Find by      │ │ Create New   │                 │
+│     │ Email        │ │ googleId     │ │ User         │                 │
+│     └──────────────┘ └──────────────┘ └──────────────┘                 │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Authentication Details:**
-- Provider: Credentials (email/password)
+- Providers: Credentials (email/password) + Google OAuth
 - Session Strategy: JWT (stateless)
-- Password: bcrypt hashed
-- Token Storage: HTTP-only cookie
+- Password: bcrypt hashed (10 rounds)
+- Token Storage: HTTP-only secure cookie
+- Account Linking: Email-based (Google users linked to existing accounts)
 
 ### 4.3 SM-2 Algorithm
 
@@ -254,7 +274,8 @@ Ease Factor Update:
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | /api/register | Create new user |
-| POST | /api/auth/callback/credentials | Login |
+| POST | /api/auth/callback/credentials | Email/password login |
+| GET | /api/auth/callback/google | Google OAuth callback |
 | POST | /api/auth/signout | Logout |
 
 ### Decks
@@ -628,7 +649,10 @@ npx wrangler d1 execute ankiren-db-uat --remote --file=./migrations/0001_init.sq
 |----------|------------|---------|-----|
 | NEXTAUTH_URL | https://ankiren.com | https://staging.ankiren.com | https://uat.ankiren.com |
 | ENVIRONMENT | production | staging | uat |
+| AUTH_TRUST_HOST | true | true | true |
 | NEXTAUTH_SECRET | (secret) | (secret) | (secret) |
+| GOOGLE_CLIENT_ID | (secret) | (secret) | (secret) |
+| GOOGLE_CLIENT_SECRET | (secret) | (secret) | (secret) |
 
 ## 13. Future Improvements
 
