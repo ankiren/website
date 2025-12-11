@@ -1,10 +1,15 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { getD1, db } from "./d1";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
     Credentials({
       name: "credentials",
       credentials: {
@@ -19,7 +24,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const d1 = getD1();
         const user = await db.user.findByEmail(d1, credentials.email as string);
 
-        if (!user) {
+        if (!user || !user.password) {
           return null;
         }
 
@@ -36,6 +41,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           id: user.id,
           email: user.email,
           name: user.name,
+          image: user.image,
         };
       },
     }),
@@ -47,8 +53,47 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     signIn: "/login",
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async signIn({ user, account }) {
+      if (account?.provider === "google") {
+        const d1 = getD1();
+        const googleId = account.providerAccountId;
+
+        // Check if user exists by googleId
+        let existingUser = await db.user.findByGoogleId(d1, googleId);
+
+        if (!existingUser && user.email) {
+          // Check if user exists by email
+          existingUser = await db.user.findByEmail(d1, user.email);
+
+          if (existingUser) {
+            // Link existing account with Google
+            await db.user.updateGoogleId(d1, existingUser.id, {
+              googleId,
+              image: user.image || undefined,
+              name: existingUser.name ? undefined : user.name || undefined,
+            });
+          } else {
+            // Create new user with Google account
+            existingUser = await db.user.create(d1, {
+              email: user.email,
+              name: user.name || undefined,
+              image: user.image || undefined,
+              googleId,
+            });
+          }
+        }
+
+        if (existingUser) {
+          user.id = existingUser.id;
+        }
+      }
+      return true;
+    },
+    async jwt({ token, user, account }) {
       if (user) {
+        token.id = user.id;
+      }
+      if (account?.provider === "google" && user) {
         token.id = user.id;
       }
       return token;

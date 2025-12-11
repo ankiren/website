@@ -52,8 +52,10 @@ export function generateId(): string {
 export interface User {
   id: string;
   email: string;
-  password: string;
+  password: string | null;
   name: string | null;
+  image: string | null;
+  googleId: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -107,15 +109,48 @@ export const db = {
 
     async create(
       d1: D1Database,
-      data: { email: string; password: string; name?: string }
+      data: { email: string; password?: string; name?: string; image?: string; googleId?: string }
     ): Promise<User> {
       const id = generateId();
       const now = new Date().toISOString();
       await d1
         .prepare(
-          "INSERT INTO User (id, email, password, name, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)"
+          "INSERT INTO User (id, email, password, name, image, googleId, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
         )
-        .bind(id, data.email, data.password, data.name || null, now, now)
+        .bind(id, data.email, data.password || null, data.name || null, data.image || null, data.googleId || null, now, now)
+        .run();
+      return (await db.user.findById(d1, id))!;
+    },
+
+    async findByGoogleId(d1: D1Database, googleId: string): Promise<User | null> {
+      return d1
+        .prepare("SELECT * FROM User WHERE googleId = ?")
+        .bind(googleId)
+        .first<User>();
+    },
+
+    async updateGoogleId(
+      d1: D1Database,
+      id: string,
+      data: { googleId: string; image?: string; name?: string }
+    ): Promise<User> {
+      const now = new Date().toISOString();
+      const updates: string[] = ["updatedAt = ?", "googleId = ?"];
+      const values: unknown[] = [now, data.googleId];
+
+      if (data.image !== undefined) {
+        updates.push("image = ?");
+        values.push(data.image);
+      }
+      if (data.name !== undefined) {
+        updates.push("name = ?");
+        values.push(data.name);
+      }
+
+      values.push(id);
+      await d1
+        .prepare(`UPDATE User SET ${updates.join(", ")} WHERE id = ?`)
+        .bind(...values)
         .run();
       return (await db.user.findById(d1, id))!;
     },
