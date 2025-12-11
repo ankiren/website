@@ -2,10 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## 0.2.1 - 2025-12-11
+
+### Added
+- GitHub issues for all 15 user stories (linked to epics)
+- GitHub labels for priority and epic tracking
 
 ### Changed
-- Update README.md with project documentation
+- User story files now use YAML frontmatter format
+- All user stories include `github_issue` field linking to GitHub issues
 
 ## 0.2.0 - 2025-12-11
 
