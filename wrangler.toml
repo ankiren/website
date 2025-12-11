@@ -1,0 +1,65 @@
+name = "ankiren"
+main = ".open-next/worker.js"
+compatibility_date = "2025-03-25"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+# Custom domain routes (Production)
+routes = [
+  { pattern = "ankiren.com/*", zone_name = "ankiren.com" },
+  { pattern = "www.ankiren.com/*", zone_name = "ankiren.com" },
+  { pattern = "api.ankiren.com/*", zone_name = "ankiren.com" }
+]
+
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+[vars]
+NEXTAUTH_URL = "https://ankiren.com"
+ENVIRONMENT = "production"
+# NEXTAUTH_SECRET should be set via wrangler secret
+
+# D1 Database binding (Production)
+[[d1_databases]]
+binding = "DB"
+database_name = "ankiren-db"
+database_id = "8fc09382-3dd5-4cd4-9d66-5d94c7461b5d"
+
+# ============================================
+# STAGING Environment
+# ============================================
+[env.staging]
+name = "ankiren-staging"
+workers_dev = true
+routes = [
+  { pattern = "staging.ankiren.com/*", zone_name = "ankiren.com" }
+]
+
+[env.staging.vars]
+NEXTAUTH_URL = "https://staging.ankiren.com"
+ENVIRONMENT = "staging"
+
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "ankiren-db-staging"
+database_id = "87fb2151-adec-4912-8d60-ec9b9e2fc2a1"
+
+# ============================================
+# UAT Environment
+# ============================================
+[env.uat]
+name = "ankiren-uat"
+workers_dev = true
+routes = [
+  { pattern = "uat.ankiren.com/*", zone_name = "ankiren.com" }
+]
+
+[env.uat.vars]
+NEXTAUTH_URL = "https://uat.ankiren.com"
+ENVIRONMENT = "uat"
+
+[[env.uat.d1_databases]]
+binding = "DB"
+database_name = "ankiren-db-uat"
+database_id = "55e69a81-d84d-4258-a159-ae737cc705e2"
