@@ -19,13 +19,13 @@ Users need to register and login to save their decks, cards, and review progress
 | US-1.1 | User Registration | Done | Critical | [US-1-1.md](US-1-1.md) |
 | US-1.2 | User Login | Done | Critical | [US-1-2.md](US-1-2.md) |
 | US-1.3 | User Logout | Done | High | [US-1-3.md](US-1-3.md) |
-| US-1.4 | Login with Google | Planned | High | [US-1-4.md](US-1-4.md) |
+| US-1.4 | Login with Google | Done | High | [US-1-4.md](US-1-4.md) |
 
 ---
 
 ## Technical Implementation
 
-- **Provider**: NextAuth.js v5 (Credentials)
+- **Provider**: NextAuth.js v5 (Credentials + Google OAuth)
 - **Session**: JWT-based (stateless)
 - **Password**: bcrypt hashing (10 rounds)
 - **Storage**: HTTP-only cookies
@@ -34,7 +34,8 @@ Users need to register and login to save their decks, cards, and review progress
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/api/register` | Create new user |
-| POST | `/api/auth/callback/credentials` | Login |
+| POST | `/api/auth/callback/credentials` | Login with email/password |
+| GET | `/api/auth/callback/google` | Google OAuth callback |
 | POST | `/api/auth/signout` | Logout |
 
 ### Files

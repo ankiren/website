@@ -35,6 +35,9 @@ spec/
 │       ├── US-4-2.md        # Flip Card Animation
 │       ├── US-4-3.md        # Rate Card Recall
 │       └── US-4-4.md        # Session Completion
+├── change-requests/          # Change Requests for User Stories
+│   ├── INDEX.md             # CR tracking table
+│   └── CR-TEMPLATE.md       # Template for new CRs
 ├── roadmap/                  # Roadmap & Planning
 │   └── ROADMAP.md
 └── research/                 # User Research & Analysis
@@ -59,6 +62,10 @@ spec/
 ### Roadmap
 - [Product Roadmap](roadmap/ROADMAP.md)
 
+### Change Requests
+- [CR Index](change-requests/INDEX.md)
+- [CR Template](change-requests/CR-TEMPLATE.md)
+
 ---
 
 ## Naming Conventions
@@ -69,6 +76,7 @@ spec/
 | Epic folder | `epic-N-name/` | `epic-1-user-authentication/` |
 | Epic overview | `EPIC.md` | `EPIC.md` |
 | User story | `US-N-X.md` | `US-1-1.md` |
+| Change Request | `CR-NNN-name.md` | `CR-001-add-email-verification.md` |
 
 ---
 

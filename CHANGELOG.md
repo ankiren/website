@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 ### Added
 - US-1.4: Login with Google user story
 - Project management workflow documentation (Jira agile workflows)
+- Change Request management system (`spec/change-requests/`)
+- CR-001: Mark Google OAuth as Implemented
+
+### Changed
+- US-1.4 status updated from Planned to Done
+- EPIC-1 technical implementation updated to include Google OAuth
 
 ## 0.2.1 - 2025-12-11
 
