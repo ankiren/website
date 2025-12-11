@@ -5,14 +5,17 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
-- US-1.4: Login with Google user story
-- Project management workflow documentation (Jira agile workflows)
-- Change Request management system (`spec/change-requests/`)
-- CR-001: Mark Google OAuth as Implemented
+- CR-002: Google-Only Authentication change request
+- Post-login UI state acceptance criteria for button visibility
 
 ### Changed
-- US-1.4 status updated from Planned to Done
-- EPIC-1 technical implementation updated to include Google OAuth
+- US-1.1: Updated to Google-only registration (removed email/password)
+- US-1.2: Updated to Google-only login with post-login UI state criteria
+- US-1.3: Updated for Google OAuth session logout
+- EPIC-1: Status changed to In Progress, merged US-1.4 into US-1.2
+
+### Removed
+- US-1.4: Merged into US-1.2 and US-1.1 (Google OAuth now unified)
 
 ## 0.2.1 - 2025-12-11
 

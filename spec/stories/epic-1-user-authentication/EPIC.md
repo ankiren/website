@@ -1,7 +1,7 @@
 # Epic 1: User Authentication
 
 **ID:** EPIC-1
-**Status:** Done
+**Status:** In Progress
 **Description:** Enable users to create accounts and securely access their flashcard data.
 
 ---
@@ -17,9 +17,10 @@ Users need to register and login to save their decks, cards, and review progress
 | ID | Name | Status | Priority | File |
 |----|------|--------|----------|------|
 | US-1.1 | User Registration | Done | Critical | [US-1-1.md](US-1-1.md) |
-| US-1.2 | User Login | Done | Critical | [US-1-2.md](US-1-2.md) |
+| US-1.2 | User Login with Google | In Progress | Critical | [US-1-2.md](US-1-2.md) |
 | US-1.3 | User Logout | Done | High | [US-1-3.md](US-1-3.md) |
-| US-1.4 | Login with Google | Done | High | [US-1-4.md](US-1-4.md) |
+
+> **Note:** US-1.4 (Login with Google) was merged into US-1.2 and US-1.1 per [CR-002](../../change-requests/CR-002-update-login-logout.md).
 
 ---
 
@@ -51,9 +52,8 @@ Users need to register and login to save their decks, cards, and review progress
 
 | Story | Reach | Impact | Confidence | Effort | Score |
 |-------|-------|--------|------------|--------|-------|
-| US-1.1 | 100% | 3 | 100% | 1w | 300 |
+| US-1.1 | 100% | 3 | 100% | 0.5w | 600 |
 | US-1.2 | 100% | 3 | 100% | 0.5w | 600 |
 | US-1.3 | 100% | 2 | 100% | 0.25w | 800 |
-| US-1.4 | 80% | 2 | 100% | 0.5w | 320 |
 
-**Average Score:** 505
+**Average Score:** 667
