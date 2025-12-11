@@ -2,7 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## 0.2.0 - 2025-12-11
+
+### Added
+- Product specification folder structure (`spec/`)
+- PRD-001: Ankiren MVP product requirements document
+- User stories for 4 epics (15 stories total)
+- Product roadmap documentation
+- RICE scoring for all user stories
+
+## 0.1.0 - 2025-12-11
 
 ### Added
 - Initial Ankiren flashcard application with SM-2 spaced repetition algorithm
