@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - CR-002: Google-Only Authentication change request
 - Post-login UI state acceptance criteria for button visibility
+- `.wrangler` directory to gitignore
 
 ### Changed
 - US-1.1: Updated to Google-only registration (removed email/password)
@@ -15,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - EPIC-1: Status changed to In Progress, merged US-1.4 into US-1.2
 
 ### Removed
+- Obsolete `docs/workflows/project_management.md` file
 - US-1.4: Merged into US-1.2 and US-1.1 (Google OAuth now unified)
 
 ## 0.2.1 - 2025-12-11
