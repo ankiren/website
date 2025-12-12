@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - CR-002: Google-Only Authentication change request
 - Post-login UI state acceptance criteria for button visibility
 - `.wrangler` directory to gitignore
+- AC-1.2.6: Hero section conditional rendering (hide auth buttons when logged in)
 
 ### Changed
 - US-1.1: Updated to Google-only registration (removed email/password)
