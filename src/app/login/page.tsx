@@ -2,44 +2,12 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Button from "@/components/ui/Button";
-import Input from "@/components/ui/Input";
 import Card from "@/components/ui/Card";
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    try {
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        setError("Invalid email or password");
-      } else {
-        router.push("/dashboard");
-        router.refresh();
-      }
-    } catch {
-      setError("An error occurred. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleGoogleSignIn = async () => {
     setError("");
@@ -96,41 +64,6 @@ export default function LoginPage() {
           </svg>
           {googleLoading ? "Signing in..." : "Continue with Google"}
         </button>
-
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300"></div>
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">or</span>
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            id="email"
-            type="email"
-            label="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            placeholder="you@example.com"
-          />
-
-          <Input
-            id="password"
-            type="password"
-            label="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            placeholder="Enter your password"
-          />
-
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Signing in..." : "Sign in"}
-          </Button>
-        </form>
 
         <p className="text-center text-gray-600 mt-6">
           Don&apos;t have an account?{" "}

@@ -1,15 +1,16 @@
 ---
-title: "CR-002: Google-Only Authentication"
-status: Draft
+title: "CR-002: Update Login Logout"
+status: Approved
 created: 2025-12-11
 author: ""
 affected_story: US-1.1, US-1.2, US-1.3, US-1.4
-decision: Pending
+decision: Approved
 decided_by: ""
 decided_date: ""
+github_issue: https://github.com/ankiren/website/issues/18
 ---
 
-# CR-002: Google-Only Authentication
+# CR-002: Update Login Logout
 
 ## Affected User Stories
 
@@ -110,10 +111,10 @@ Simplify authentication by removing email/password login and registration, using
 - [x] Error message is shown if Google authentication fails
 
 ### Post-Login UI State
-- [ ] "Sign In" button in hero section is hidden when user is logged in
-- [ ] "Start Learning Free" button in hero section is hidden when user is logged in
-- [ ] Navigation bar shows: Dashboard link, user email, and "Sign Out" button when logged in
-- [ ] Navigation bar hides any duplicate "Sign In" links when logged in
+- [x] "Sign In" button in hero section is hidden when user is logged in
+- [x] "Start Learning Free" button in hero section is hidden when user is logged in
+- [x] Navigation bar shows: Dashboard link, user email, and "Sign Out" button when logged in
+- [x] Navigation bar hides any duplicate "Sign In" links when logged in
 
 ### Account Linking
 - [x] Existing users (same email) are linked to their Google account
@@ -224,12 +225,20 @@ Simplify authentication by removing email/password login and registration, using
 5. EPIC.md story index has been **updated** with a note about the merge
 6. Post-login UI state criteria added to fix button visibility bug
 
+**Implementation Required:**
+- [ ] **AC-1.2.6: Post-Login UI State** - Implement conditional rendering for authenticated users:
+  - Hide "Sign In" button in hero section when logged in
+  - Hide "Start Learning Free" button in hero section when logged in
+  - Show Dashboard link, user email, and "Sign Out" button in navbar when logged in
+  - Hide "Sign In" links in navbar when logged in
+
 ---
 
 ## Implementation
 
 | Field | Value |
 |-------|-------|
+| GitHub Issue | [#18](https://github.com/ankiren/website/issues/18) |
 | Implemented by | - |
 | Date | - |
 | Related PR/Commit | - |

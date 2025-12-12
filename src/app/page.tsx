@@ -1,8 +1,13 @@
+"use client";
+
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import Navbar from "@/components/Navbar";
 import Button from "@/components/ui/Button";
 
 export default function Home() {
+  const { data: session } = useSession();
+
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -17,16 +22,25 @@ export default function Home() {
             proven SM-2 algorithm. Create flashcards, study efficiently, and track
             your progress.
           </p>
-          <div className="flex gap-4">
-            <Link href="/register">
-              <Button size="lg">Start Learning Free</Button>
-            </Link>
-            <Link href="/login">
-              <Button variant="secondary" size="lg">
-                Sign In
-              </Button>
-            </Link>
-          </div>
+          {!session && (
+            <div className="flex gap-4">
+              <Link href="/register">
+                <Button size="lg">Start Learning Free</Button>
+              </Link>
+              <Link href="/login">
+                <Button variant="secondary" size="lg">
+                  Sign In
+                </Button>
+              </Link>
+            </div>
+          )}
+          {session && (
+            <div className="flex gap-4">
+              <Link href="/dashboard">
+                <Button size="lg">Go to Dashboard</Button>
+              </Link>
+            </div>
+          )}
 
           <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
             <div className="bg-white p-6 rounded-xl shadow-md">
