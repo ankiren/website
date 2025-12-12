@@ -2,46 +2,12 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Button from "@/components/ui/Button";
-import Input from "@/components/ui/Input";
 import Card from "@/components/ui/Card";
 
 export default function RegisterPage() {
-  const router = useRouter();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    try {
-      const response = await fetch("/api/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || "Registration failed");
-      } else {
-        router.push("/login?registered=true");
-      }
-    } catch {
-      setError("An error occurred. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleGoogleSignUp = async () => {
     setError("");
@@ -98,51 +64,6 @@ export default function RegisterPage() {
           </svg>
           {googleLoading ? "Signing up..." : "Continue with Google"}
         </button>
-
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300"></div>
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">or</span>
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            id="name"
-            type="text"
-            label="Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Your name"
-          />
-
-          <Input
-            id="email"
-            type="email"
-            label="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            placeholder="you@example.com"
-          />
-
-          <Input
-            id="password"
-            type="password"
-            label="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={6}
-            placeholder="At least 6 characters"
-          />
-
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Creating account..." : "Create account"}
-          </Button>
-        </form>
 
         <p className="text-center text-gray-600 mt-6">
           Already have an account?{" "}
