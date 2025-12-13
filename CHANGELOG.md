@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- UI Design System documentation (`docs/ui-design/`):
+  - Main design system doc with colors, typography, layout patterns
+  - Base component docs (Button, Input, Card, Badge, Modal, Tabs)
+  - Feature component docs (FlashCard, StudySession, DeckCard, Navbar)
+  - Page template docs (Landing, Dashboard, Auth, Admin, Forms, Study)
+- Authorization module implementation (CR-003):
+  - RBAC with roles (admin, user) and permissions system
+  - Admin API endpoints: `/api/admin/users`, `/api/admin/roles`, `/api/admin/permissions`
+  - User permissions API: `/api/me/permissions`
+  - Admin dashboard UI with user/role management
+  - Authorization middleware and helper functions
+  - D1 database operations for roles and permissions
+  - E2E tests for authorization (auth and unauth scenarios)
+  - OpenAPI spec for authorization APIs
+  - Database schema (DBML) documentation
 - Epic 5: Authorization - RBAC, roles, permissions
 - Epic 6: Skill Management - skill tracking, categories, activities, goals
 - CR-004: Skill Management Module change request

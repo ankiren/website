@@ -1,0 +1,119 @@
+// Authorization Module Database Schema
+// DBML Documentation: https://dbml.dbdiagram.io/docs
+
+Project authorization {
+  database_type: 'SQLite'
+  Note: 'Role-Based Access Control (RBAC) schema for Ankiren'
+}
+
+// =============================================================================
+// TABLES
+// =============================================================================
+
+Table Role {
+  id TEXT [pk, note: 'CUID identifier']
+  name TEXT [unique, not null, note: 'Role name (e.g., "admin")']
+  description TEXT [note: 'Human-readable description']
+  isSystem INTEGER [default: 0, note: '1 = system role (non-deletable)']
+  createdAt TEXT [not null, default: `datetime('now')`, note: 'ISO timestamp']
+  updatedAt TEXT [not null, default: `datetime('now')`, note: 'ISO timestamp']
+
+  indexes {
+    name [unique]
+  }
+
+  Note: 'Defines user roles in the system'
+}
+
+Table Permission {
+  id TEXT [pk, note: 'CUID identifier']
+  name TEXT [unique, not null, note: 'Permission key (e.g., "users:manage")']
+  description TEXT [note: 'Human-readable description']
+  resource TEXT [not null, note: 'Resource type (users, roles, permissions)']
+  action TEXT [not null, note: 'Action type (manage, read, assign)']
+  isSystem INTEGER [default: 0, note: '1 = system permission (non-deletable)']
+  createdAt TEXT [not null, default: `datetime('now')`, note: 'ISO timestamp']
+  updatedAt TEXT [not null, default: `datetime('now')`, note: 'ISO timestamp']
+
+  indexes {
+    name [unique]
+    resource
+    action
+  }
+
+  Note: 'Defines granular permissions in the system'
+}
+
+Table UserRole {
+  userId TEXT [not null, ref: > User.id]
+  roleId TEXT [not null, ref: > Role.id]
+  createdAt TEXT [not null, default: `datetime('now')`, note: 'ISO timestamp']
+
+  indexes {
+    (userId, roleId) [pk]
+    userId
+    roleId
+  }
+
+  Note: 'Junction table: assigns roles to users'
+}
+
+Table RolePermission {
+  roleId TEXT [not null, ref: > Role.id]
+  permissionId TEXT [not null, ref: > Permission.id]
+  createdAt TEXT [not null, default: `datetime('now')`, note: 'ISO timestamp']
+
+  indexes {
+    (roleId, permissionId) [pk]
+    roleId
+    permissionId
+  }
+
+  Note: 'Junction table: assigns permissions to roles'
+}
+
+// =============================================================================
+// EXISTING TABLES (Reference Only)
+// =============================================================================
+
+Table User {
+  id TEXT [pk, note: 'CUID identifier']
+  email TEXT [unique, not null, note: 'User email']
+  password TEXT [note: 'bcrypt hashed (null for OAuth)']
+  name TEXT [note: 'Display name']
+  image TEXT [note: 'Profile picture URL (OAuth)']
+  googleId TEXT [unique, note: 'Google OAuth provider ID']
+  createdAt TEXT [not null, note: 'ISO timestamp']
+  updatedAt TEXT [not null, note: 'ISO timestamp']
+
+  Note: 'Existing User table from auth module'
+}
+
+// =============================================================================
+// RELATIONSHIPS
+// =============================================================================
+
+// User <-> Role (Many-to-Many via UserRole)
+// A user can have multiple roles
+// A role can be assigned to multiple users
+
+// Role <-> Permission (Many-to-Many via RolePermission)
+// A role can have multiple permissions
+// A permission can be assigned to multiple roles
+
+// =============================================================================
+// DEFAULT DATA
+// =============================================================================
+
+// Default Roles:
+// - role_admin: "admin" - System administrator with full access (isSystem=1)
+// - role_user: "user" - Regular user with own data access (isSystem=1)
+
+// Default Permissions:
+// - perm_users_manage: "users:manage" - Create, edit, delete users (isSystem=1)
+// - perm_roles_manage: "roles:manage" - Create, edit, delete roles (isSystem=1)
+// - perm_roles_assign: "roles:assign" - Assign roles to users (isSystem=1)
+// - perm_permissions_manage: "permissions:manage" - Create, edit, delete permissions (isSystem=1)
+
+// Default Role-Permission Assignments:
+// - admin role has all permissions

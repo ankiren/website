@@ -7,6 +7,7 @@ affected_story: None (New Feature)
 decision: Pending
 decided_by: ""
 decided_date: ""
+github_issue: https://github.com/ankiren/website/issues/21
 ---
 
 # CR-004: Skill Management Module

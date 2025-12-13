@@ -89,6 +89,39 @@ export interface Review {
   userId: string;
 }
 
+// Authorization entities
+export interface Role {
+  id: string;
+  name: string;
+  description: string | null;
+  isSystem: number; // SQLite stores boolean as 0/1
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Permission {
+  id: string;
+  name: string;
+  description: string | null;
+  resource: string;
+  action: string;
+  isSystem: number; // SQLite stores boolean as 0/1
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserRole {
+  userId: string;
+  roleId: string;
+  createdAt: string;
+}
+
+export interface RolePermission {
+  roleId: string;
+  permissionId: string;
+  createdAt: string;
+}
+
 // Database operations
 export const db = {
   // User operations
@@ -153,6 +186,54 @@ export const db = {
         .bind(...values)
         .run();
       return (await db.user.findById(d1, id))!;
+    },
+
+    async count(d1: D1Database): Promise<number> {
+      const result = await d1
+        .prepare("SELECT COUNT(*) as count FROM User")
+        .first<{ count: number }>();
+      return result?.count || 0;
+    },
+
+    async findAll(
+      d1: D1Database,
+      options?: { limit?: number; offset?: number; search?: string }
+    ): Promise<{ users: User[]; total: number }> {
+      const limit = options?.limit || 20;
+      const offset = options?.offset || 0;
+      const search = options?.search;
+
+      let countQuery = "SELECT COUNT(*) as count FROM User";
+      let selectQuery = "SELECT * FROM User";
+      const params: unknown[] = [];
+
+      if (search) {
+        const searchCondition = " WHERE email LIKE ? OR name LIKE ?";
+        countQuery += searchCondition;
+        selectQuery += searchCondition;
+        params.push(`%${search}%`, `%${search}%`);
+      }
+
+      selectQuery += " ORDER BY createdAt DESC LIMIT ? OFFSET ?";
+
+      const countResult = await d1
+        .prepare(countQuery)
+        .bind(...params)
+        .first<{ count: number }>();
+
+      const result = await d1
+        .prepare(selectQuery)
+        .bind(...params, limit, offset)
+        .all<User>();
+
+      return {
+        users: result.results,
+        total: countResult?.count || 0,
+      };
+    },
+
+    async delete(d1: D1Database, id: string): Promise<void> {
+      await d1.prepare("DELETE FROM User WHERE id = ?").bind(id).run();
     },
   },
 
@@ -419,6 +500,251 @@ export const db = {
         .bind(userId)
         .first<{ count: number }>();
       return result?.count || 0;
+    },
+  },
+
+  // Role operations
+  role: {
+    async findAll(d1: D1Database): Promise<Role[]> {
+      const result = await d1
+        .prepare("SELECT * FROM Role ORDER BY name ASC")
+        .all<Role>();
+      return result.results;
+    },
+
+    async findById(d1: D1Database, id: string): Promise<Role | null> {
+      return d1
+        .prepare("SELECT * FROM Role WHERE id = ?")
+        .bind(id)
+        .first<Role>();
+    },
+
+    async findByName(d1: D1Database, name: string): Promise<Role | null> {
+      return d1
+        .prepare("SELECT * FROM Role WHERE name = ?")
+        .bind(name)
+        .first<Role>();
+    },
+
+    async create(
+      d1: D1Database,
+      data: { name: string; description?: string }
+    ): Promise<Role> {
+      const id = generateId();
+      const now = new Date().toISOString();
+      await d1
+        .prepare(
+          "INSERT INTO Role (id, name, description, isSystem, createdAt, updatedAt) VALUES (?, ?, ?, 0, ?, ?)"
+        )
+        .bind(id, data.name, data.description || null, now, now)
+        .run();
+      return (await db.role.findById(d1, id))!;
+    },
+
+    async update(
+      d1: D1Database,
+      id: string,
+      data: { description?: string }
+    ): Promise<Role> {
+      const now = new Date().toISOString();
+      const updates: string[] = ["updatedAt = ?"];
+      const values: unknown[] = [now];
+
+      if (data.description !== undefined) {
+        updates.push("description = ?");
+        values.push(data.description);
+      }
+
+      values.push(id);
+      await d1
+        .prepare(`UPDATE Role SET ${updates.join(", ")} WHERE id = ?`)
+        .bind(...values)
+        .run();
+      return (await db.role.findById(d1, id))!;
+    },
+
+    async delete(d1: D1Database, id: string): Promise<void> {
+      await d1
+        .prepare("DELETE FROM Role WHERE id = ? AND isSystem = 0")
+        .bind(id)
+        .run();
+    },
+
+    async countUsers(d1: D1Database, roleId: string): Promise<number> {
+      const result = await d1
+        .prepare("SELECT COUNT(*) as count FROM UserRole WHERE roleId = ?")
+        .bind(roleId)
+        .first<{ count: number }>();
+      return result?.count || 0;
+    },
+  },
+
+  // Permission operations
+  permission: {
+    async findAll(d1: D1Database): Promise<Permission[]> {
+      const result = await d1
+        .prepare("SELECT * FROM Permission ORDER BY resource, action ASC")
+        .all<Permission>();
+      return result.results;
+    },
+
+    async findById(d1: D1Database, id: string): Promise<Permission | null> {
+      return d1
+        .prepare("SELECT * FROM Permission WHERE id = ?")
+        .bind(id)
+        .first<Permission>();
+    },
+
+    async findByName(d1: D1Database, name: string): Promise<Permission | null> {
+      return d1
+        .prepare("SELECT * FROM Permission WHERE name = ?")
+        .bind(name)
+        .first<Permission>();
+    },
+
+    async create(
+      d1: D1Database,
+      data: { name: string; description?: string; resource: string; action: string }
+    ): Promise<Permission> {
+      const id = generateId();
+      const now = new Date().toISOString();
+      await d1
+        .prepare(
+          "INSERT INTO Permission (id, name, description, resource, action, isSystem, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, 0, ?, ?)"
+        )
+        .bind(id, data.name, data.description || null, data.resource, data.action, now, now)
+        .run();
+      return (await db.permission.findById(d1, id))!;
+    },
+
+    async delete(d1: D1Database, id: string): Promise<void> {
+      await d1
+        .prepare("DELETE FROM Permission WHERE id = ? AND isSystem = 0")
+        .bind(id)
+        .run();
+    },
+
+    async findByRoleIds(d1: D1Database, roleIds: string[]): Promise<Permission[]> {
+      if (roleIds.length === 0) return [];
+      const placeholders = roleIds.map(() => "?").join(",");
+      const result = await d1
+        .prepare(
+          `SELECT DISTINCT p.* FROM Permission p
+           INNER JOIN RolePermission rp ON rp.permissionId = p.id
+           WHERE rp.roleId IN (${placeholders})`
+        )
+        .bind(...roleIds)
+        .all<Permission>();
+      return result.results;
+    },
+  },
+
+  // UserRole operations
+  userRole: {
+    async findByUserId(d1: D1Database, userId: string): Promise<Role[]> {
+      const result = await d1
+        .prepare(
+          `SELECT r.* FROM Role r
+           INNER JOIN UserRole ur ON ur.roleId = r.id
+           WHERE ur.userId = ?`
+        )
+        .bind(userId)
+        .all<Role>();
+      return result.results;
+    },
+
+    async assign(d1: D1Database, userId: string, roleId: string): Promise<void> {
+      const now = new Date().toISOString();
+      await d1
+        .prepare("INSERT INTO UserRole (userId, roleId, createdAt) VALUES (?, ?, ?)")
+        .bind(userId, roleId, now)
+        .run();
+    },
+
+    async remove(d1: D1Database, userId: string, roleId: string): Promise<void> {
+      await d1
+        .prepare("DELETE FROM UserRole WHERE userId = ? AND roleId = ?")
+        .bind(userId, roleId)
+        .run();
+    },
+
+    async exists(d1: D1Database, userId: string, roleId: string): Promise<boolean> {
+      const result = await d1
+        .prepare("SELECT 1 FROM UserRole WHERE userId = ? AND roleId = ?")
+        .bind(userId, roleId)
+        .first<{ 1: number }>();
+      return result !== null;
+    },
+
+    async countAdmins(d1: D1Database): Promise<number> {
+      const result = await d1
+        .prepare(
+          `SELECT COUNT(DISTINCT ur.userId) as count
+           FROM UserRole ur
+           INNER JOIN Role r ON r.id = ur.roleId
+           WHERE r.name = 'admin'`
+        )
+        .first<{ count: number }>();
+      return result?.count || 0;
+    },
+
+    async findUsersByRoleId(d1: D1Database, roleId: string): Promise<User[]> {
+      const result = await d1
+        .prepare(
+          `SELECT u.* FROM User u
+           INNER JOIN UserRole ur ON ur.userId = u.id
+           WHERE ur.roleId = ?`
+        )
+        .bind(roleId)
+        .all<User>();
+      return result.results;
+    },
+  },
+
+  // RolePermission operations
+  rolePermission: {
+    async findByRoleId(d1: D1Database, roleId: string): Promise<Permission[]> {
+      const result = await d1
+        .prepare(
+          `SELECT p.* FROM Permission p
+           INNER JOIN RolePermission rp ON rp.permissionId = p.id
+           WHERE rp.roleId = ?`
+        )
+        .bind(roleId)
+        .all<Permission>();
+      return result.results;
+    },
+
+    async assign(d1: D1Database, roleId: string, permissionId: string): Promise<void> {
+      const now = new Date().toISOString();
+      await d1
+        .prepare("INSERT INTO RolePermission (roleId, permissionId, createdAt) VALUES (?, ?, ?)")
+        .bind(roleId, permissionId, now)
+        .run();
+    },
+
+    async remove(d1: D1Database, roleId: string, permissionId: string): Promise<void> {
+      await d1
+        .prepare("DELETE FROM RolePermission WHERE roleId = ? AND permissionId = ?")
+        .bind(roleId, permissionId)
+        .run();
+    },
+
+    async sync(d1: D1Database, roleId: string, permissionIds: string[]): Promise<void> {
+      // Delete existing permissions
+      await d1
+        .prepare("DELETE FROM RolePermission WHERE roleId = ?")
+        .bind(roleId)
+        .run();
+
+      // Insert new permissions
+      const now = new Date().toISOString();
+      for (const permissionId of permissionIds) {
+        await d1
+          .prepare("INSERT INTO RolePermission (roleId, permissionId, createdAt) VALUES (?, ?, ?)")
+          .bind(roleId, permissionId, now)
+          .run();
+      }
     },
   },
 };
