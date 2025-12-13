@@ -21,6 +21,11 @@ export default function Navbar() {
                 <Link href="/dashboard">
                   <Button variant="ghost">Dashboard</Button>
                 </Link>
+                {session.user?.roles?.includes("admin") && (
+                  <Link href="/dashboard/admin">
+                    <Button variant="ghost">Admin</Button>
+                  </Link>
+                )}
                 <span className="text-gray-600">{session.user?.email}</span>
                 <Button
                   variant="secondary"

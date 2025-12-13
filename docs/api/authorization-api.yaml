@@ -1,0 +1,951 @@
+openapi: 3.0.3
+info:
+  title: Ankiren Authorization API
+  description: Role-Based Access Control (RBAC) API for Ankiren
+  version: 1.0.0
+
+servers:
+  - url: https://ankiren.com
+    description: Production
+  - url: https://staging.ankiren.com
+    description: Staging
+  - url: https://uat.ankiren.com
+    description: UAT
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          example: "Unauthorized"
+
+    Success:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+
+    Role:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "role_admin"
+        name:
+          type: string
+          example: "admin"
+        description:
+          type: string
+          example: "System administrator with full access"
+        isSystem:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-01-01T00:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-01-01T00:00:00Z"
+
+    RoleWithDetails:
+      allOf:
+        - $ref: "#/components/schemas/Role"
+        - type: object
+          properties:
+            userCount:
+              type: integer
+              example: 1
+            permissions:
+              type: array
+              items:
+                type: string
+              example: ["users:manage", "roles:manage"]
+
+    RoleWithRelations:
+      allOf:
+        - $ref: "#/components/schemas/Role"
+        - type: object
+          properties:
+            permissions:
+              type: array
+              items:
+                $ref: "#/components/schemas/PermissionSummary"
+            users:
+              type: array
+              items:
+                $ref: "#/components/schemas/UserSummary"
+
+    Permission:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "perm_users_manage"
+        name:
+          type: string
+          example: "users:manage"
+        description:
+          type: string
+          example: "Create, edit, delete users"
+        resource:
+          type: string
+          example: "users"
+        action:
+          type: string
+          example: "manage"
+        isSystem:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-01-01T00:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-01-01T00:00:00Z"
+
+    PermissionSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "perm_users_manage"
+        name:
+          type: string
+          example: "users:manage"
+        description:
+          type: string
+          example: "Create, edit, delete users"
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "user_123"
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        name:
+          type: string
+          example: "John Doe"
+        image:
+          type: string
+          format: uri
+          nullable: true
+          example: "https://lh3.googleusercontent.com/..."
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-01-01T00:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-01-01T00:00:00Z"
+
+    UserSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "user_123"
+        email:
+          type: string
+          format: email
+          example: "admin@example.com"
+        name:
+          type: string
+          example: "Admin User"
+
+    UserWithRoles:
+      allOf:
+        - $ref: "#/components/schemas/User"
+        - type: object
+          properties:
+            roles:
+              type: array
+              items:
+                $ref: "#/components/schemas/RoleSummary"
+
+    UserWithPermissions:
+      allOf:
+        - $ref: "#/components/schemas/UserWithRoles"
+        - type: object
+          properties:
+            permissions:
+              type: array
+              items:
+                type: string
+              example: ["users:read"]
+
+    RoleSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "role_user"
+        name:
+          type: string
+          example: "user"
+        description:
+          type: string
+          example: "Regular user"
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          example: 100
+        totalPages:
+          type: integer
+          example: 5
+
+    CreateRoleRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: "moderator"
+        description:
+          type: string
+          maxLength: 255
+          example: "Content moderator"
+        permissions:
+          type: array
+          items:
+            type: string
+          example: ["perm_users_manage"]
+
+    UpdateRoleRequest:
+      type: object
+      properties:
+        description:
+          type: string
+          maxLength: 255
+          example: "Updated description"
+        permissions:
+          type: array
+          items:
+            type: string
+          example: ["perm_users_manage", "perm_roles_assign"]
+
+    CreatePermissionRequest:
+      type: object
+      required:
+        - name
+        - resource
+        - action
+      properties:
+        name:
+          type: string
+          pattern: "^[a-z_]+:[a-z_]+$"
+          example: "decks:export"
+        description:
+          type: string
+          maxLength: 255
+          example: "Export decks to file"
+        resource:
+          type: string
+          example: "decks"
+        action:
+          type: string
+          example: "export"
+
+    AssignRoleRequest:
+      type: object
+      required:
+        - roleId
+      properties:
+        roleId:
+          type: string
+          example: "role_admin"
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: "Unauthorized"
+
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: "Forbidden"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: "Not found"
+
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+security:
+  - bearerAuth: []
+
+paths:
+  # ============================================================
+  # ROLE MANAGEMENT
+  # ============================================================
+  /api/admin/roles:
+    get:
+      tags:
+        - Roles
+      summary: List all roles
+      description: |
+        Returns all roles with user count and permissions.
+
+        **Required Permission:** `roles:manage` OR `roles:assign`
+      operationId: listRoles
+      responses:
+        "200":
+          description: List of roles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  roles:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/RoleWithDetails"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+    post:
+      tags:
+        - Roles
+      summary: Create a new role
+      description: |
+        Creates a new custom role with optional permissions.
+
+        **Required Permission:** `roles:manage`
+      operationId: createRole
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRoleRequest"
+      responses:
+        "201":
+          description: Role created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Role"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                nameRequired:
+                  value:
+                    error: "Name is required"
+                nameExists:
+                  value:
+                    error: "Role name already exists"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/admin/roles/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Role ID
+        example: "role_admin"
+
+    get:
+      tags:
+        - Roles
+      summary: Get role details
+      description: |
+        Returns role with permissions and assigned users.
+
+        **Required Permission:** `roles:manage` OR `roles:assign`
+      operationId: getRole
+      responses:
+        "200":
+          description: Role details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleWithRelations"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: Role not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "Role not found"
+
+    put:
+      tags:
+        - Roles
+      summary: Update role
+      description: |
+        Updates role description and/or permissions.
+        System role names cannot be modified.
+
+        **Required Permission:** `roles:manage`
+      operationId: updateRole
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRoleRequest"
+      responses:
+        "200":
+          description: Role updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Role"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "Cannot modify system role name"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      tags:
+        - Roles
+      summary: Delete role
+      description: |
+        Deletes a custom role. System roles cannot be deleted.
+        Roles with assigned users cannot be deleted.
+
+        **Required Permission:** `roles:manage`
+      operationId: deleteRole
+      responses:
+        "200":
+          description: Role deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Success"
+        "400":
+          description: Cannot delete role
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                systemRole:
+                  value:
+                    error: "Cannot delete system role"
+                hasUsers:
+                  value:
+                    error: "Cannot delete role with assigned users"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ============================================================
+  # PERMISSION MANAGEMENT
+  # ============================================================
+  /api/admin/permissions:
+    get:
+      tags:
+        - Permissions
+      summary: List all permissions
+      description: |
+        Returns all permissions grouped by resource.
+
+        **Required Permission:** `permissions:manage` OR `roles:manage`
+      operationId: listPermissions
+      responses:
+        "200":
+          description: List of permissions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  permissions:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Permission"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+    post:
+      tags:
+        - Permissions
+      summary: Create a new permission
+      description: |
+        Creates a new custom permission.
+
+        **Required Permission:** `permissions:manage`
+      operationId: createPermission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePermissionRequest"
+      responses:
+        "201":
+          description: Permission created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Permission"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "Permission name already exists"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/admin/permissions/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Permission ID
+        example: "perm_users_manage"
+
+    get:
+      tags:
+        - Permissions
+      summary: Get permission details
+      description: |
+        Returns permission details.
+
+        **Required Permission:** `permissions:manage` OR `roles:manage`
+      operationId: getPermission
+      responses:
+        "200":
+          description: Permission details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Permission"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: Permission not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "Permission not found"
+
+    delete:
+      tags:
+        - Permissions
+      summary: Delete permission
+      description: |
+        Deletes a custom permission. System permissions cannot be deleted.
+
+        **Required Permission:** `permissions:manage`
+      operationId: deletePermission
+      responses:
+        "200":
+          description: Permission deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Success"
+        "400":
+          description: Cannot delete permission
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "Cannot delete system permission"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: Permission not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "Permission not found"
+
+  # ============================================================
+  # USER MANAGEMENT
+  # ============================================================
+  /api/admin/users:
+    get:
+      tags:
+        - Users
+      summary: List users with roles
+      description: |
+        Returns paginated list of users with their assigned roles.
+
+        **Required Permission:** `users:manage`
+      operationId: listUsers
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+          description: Page number
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+          description: Items per page
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by email or name
+      responses:
+        "200":
+          description: Paginated list of users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/UserWithRoles"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/admin/users/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: User ID
+        example: "user_123"
+
+    get:
+      tags:
+        - Users
+      summary: Get user details
+      description: |
+        Returns user with roles and computed permissions.
+
+        **Required Permission:** `users:manage`
+      operationId: getUser
+      responses:
+        "200":
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserWithPermissions"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "User not found"
+
+    delete:
+      tags:
+        - Users
+      summary: Delete user
+      description: |
+        Deletes a user and all their data.
+        Cannot delete yourself or the last admin user.
+
+        **Required Permission:** `users:manage`
+      operationId: deleteUser
+      responses:
+        "200":
+          description: User deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Success"
+        "400":
+          description: Cannot delete user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                self:
+                  value:
+                    error: "Cannot delete yourself"
+                lastAdmin:
+                  value:
+                    error: "Cannot delete last admin user"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/admin/users/{id}/roles:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: User ID
+        example: "user_123"
+
+    post:
+      tags:
+        - Users
+      summary: Assign role to user
+      description: |
+        Assigns a role to a user.
+
+        **Required Permission:** `roles:assign`
+      operationId: assignRole
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignRoleRequest"
+      responses:
+        "200":
+          description: Role assigned successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  roles:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/RoleSummary"
+        "400":
+          description: Role already assigned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "User already has this role"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: User or role not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                userNotFound:
+                  value:
+                    error: "User not found"
+                roleNotFound:
+                  value:
+                    error: "Role not found"
+
+  /api/admin/users/{id}/roles/{roleId}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: User ID
+        example: "user_123"
+      - name: roleId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Role ID to remove
+        example: "role_admin"
+
+    delete:
+      tags:
+        - Users
+      summary: Remove role from user
+      description: |
+        Removes a role from a user.
+        Cannot remove the last admin role from the last admin user.
+
+        **Required Permission:** `roles:assign`
+      operationId: removeRole
+      responses:
+        "200":
+          description: Role removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Success"
+        "400":
+          description: Cannot remove role
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "Cannot remove last admin role"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: User does not have this role
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "User does not have this role"
+
+  # ============================================================
+  # CURRENT USER
+  # ============================================================
+  /api/me/permissions:
+    get:
+      tags:
+        - Current User
+      summary: Get my permissions
+      description: |
+        Returns the current user's roles and computed permissions.
+
+        **Required Permission:** None (authenticated user only)
+      operationId: getMyPermissions
+      responses:
+        "200":
+          description: Current user's permissions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  roles:
+                    type: array
+                    items:
+                      type: string
+                    example: ["admin", "user"]
+                  permissions:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                      [
+                        "users:manage",
+                        "roles:manage",
+                        "roles:assign",
+                        "permissions:manage",
+                      ]
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+tags:
+  - name: Roles
+    description: Role management operations
+  - name: Permissions
+    description: Permission management operations
+  - name: Users
+    description: User and role assignment operations
+  - name: Current User
+    description: Current authenticated user operations

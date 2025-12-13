@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS User (
   id TEXT PRIMARY KEY NOT NULL,
   email TEXT UNIQUE NOT NULL,
-  password TEXT NOT NULL,
+  password TEXT,  -- Nullable for Google OAuth users
   name TEXT,
   createdAt TEXT NOT NULL DEFAULT (datetime('now')),
   updatedAt TEXT NOT NULL DEFAULT (datetime('now'))
