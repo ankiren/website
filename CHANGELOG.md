@@ -5,7 +5,10 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
-- CR-003: Skill Management & Authorization Module change request
+- Epic 5: Authorization - RBAC, roles, permissions
+- Epic 6: Skill Management - skill tracking, categories, activities, goals
+- CR-004: Skill Management Module change request
+- CR-003: Authorization Module change request
 - CR-002: Google-Only Authentication change request
 - Post-login UI state acceptance criteria for button visibility
 - `.wrangler` directory to gitignore
