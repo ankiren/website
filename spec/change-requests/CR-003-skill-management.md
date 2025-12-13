@@ -17,8 +17,8 @@ decided_date: ""
 
 ### New Epics
 
-- **Epic 5: Skill Management** - NEW
-- **Epic 6: Authorization (Phân quyền)** - NEW
+- **Epic 5: Authorization (Phân quyền)** - NEW
+- **Epic 6: Skill Management** - NEW
 
 ---
 
@@ -204,8 +204,8 @@ Feature: Authorization Module (Phân quyền)
 
 | Epic | Description | User Stories |
 |------|-------------|--------------|
-| Epic 5: Skill Management | Skills, categories, activities, goals, progress | 6-8 stories |
-| Epic 6: Authorization | Roles, permissions, teams, access control | 5-7 stories |
+| Epic 5: Authorization | Roles, permissions, teams, access control | 5-7 stories |
+| Epic 6: Skill Management | Skills, categories, activities, goals, progress | 6-8 stories |
 
 ---
 
@@ -446,18 +446,7 @@ CREATE TABLE AuditLog (
 
 ## RICE Score
 
-### Epic 5: Skill Management
-
-| Factor | Value | Rationale |
-|--------|-------|-----------|
-| Reach | 50% | Broad appeal for personal development users |
-| Impact | 2 | Significant - track and improve skills |
-| Confidence | 80% | Straightforward implementation |
-| Effort | 6w | New feature, moderate complexity |
-
-**Score:** (50 × 2 × 0.8) / 6 = **13.3**
-
-### Epic 6: Authorization (Phân quyền)
+### Epic 5: Authorization (Phân quyền)
 
 | Factor | Value | Rationale |
 |--------|-------|-----------|
@@ -467,6 +456,17 @@ CREATE TABLE AuditLog (
 | Effort | 5w | Moderate complexity |
 
 **Score:** (30 × 3 × 0.8) / 5 = **14.4**
+
+### Epic 6: Skill Management
+
+| Factor | Value | Rationale |
+|--------|-------|-----------|
+| Reach | 50% | Broad appeal for personal development users |
+| Impact | 2 | Significant - track and improve skills |
+| Confidence | 80% | Straightforward implementation |
+| Effort | 6w | New feature, moderate complexity |
+
+**Score:** (50 × 2 × 0.8) / 6 = **13.3**
 
 ### Combined
 
