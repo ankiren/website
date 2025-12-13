@@ -13,12 +13,10 @@ decided_date: ""
 
 ## Affected User Stories
 
-**This is a new feature addition.** No existing epics are affected.
+**This is a new feature addition.** No existing user stories are affected.
 
-- [Epic 1: User Authentication](../stories/epic-1-user-authentication/EPIC.md) - No changes
-- [Epic 2: Deck Management](../stories/epic-2-deck-management/EPIC.md) - No changes
-- [Epic 3: Card Management](../stories/epic-3-card-management/EPIC.md) - No changes
-- [Epic 4: Study Session](../stories/epic-4-study-session/EPIC.md) - No changes
+### New Epics
+
 - **Epic 5: Skill Management** - NEW
 - **Epic 6: Authorization (Phân quyền)** - NEW
 
