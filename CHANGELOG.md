@@ -5,13 +5,18 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
-- CR-003: Skill Management & Authorization Module change request
+- Epic 5: Authorization - RBAC, roles, permissions
+- Epic 6: Skill Management - skill tracking, categories, activities, goals
+- CR-004: Skill Management Module change request
+- CR-003: Authorization Module change request
 - CR-002: Google-Only Authentication change request
 - Post-login UI state acceptance criteria for button visibility
 - `.wrangler` directory to gitignore
 - AC-1.2.6: Hero section conditional rendering (hide auth buttons when logged in)
 
 ### Changed
+- CR-003: Simplified to focus on "what" changes (removed DB schema, API endpoints)
+- US-5.1 to US-5.5: Added AC summary table before detailed Gherkin scenarios
 - US-1.1: Updated to Google-only registration (removed email/password)
 - US-1.2: Updated to Google-only login with post-login UI state criteria
 - US-1.3: Updated for Google OAuth session logout
