@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- CR-003: Skill Management & Authorization Module change request
 - CR-002: Google-Only Authentication change request
 - Post-login UI state acceptance criteria for button visibility
 - `.wrangler` directory to gitignore

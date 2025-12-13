@@ -8,6 +8,7 @@ This file tracks all Change Requests (CRs) for User Story modifications.
 
 | CR ID | Title | Affected Story | Status | Created |
 |-------|-------|----------------|--------|---------|
+| [CR-003](CR-003-skill-management.md) | Skill Management & Authorization | None (New Feature) | Draft | 2025-12-13 |
 | [CR-002](CR-002-update-login-logout.md) | Google-Only Authentication | [US-1.1](../stories/epic-1-user-authentication/US-1-1.md), [US-1.2](../stories/epic-1-user-authentication/US-1-2.md), [US-1.3](../stories/epic-1-user-authentication/US-1-3.md) | Draft | 2025-12-11 |
 
 ---
