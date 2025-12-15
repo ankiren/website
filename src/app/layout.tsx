@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Ankiren - Flashcard Learning",
-  description: "A powerful spaced repetition flashcard app",
+  title: "Ankiren - Lifelong Learning",
+  description: "A platform to help you learn and retain knowledge effectively over time.",
 };
 
 export default function RootLayout({

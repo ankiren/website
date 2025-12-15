@@ -121,6 +121,10 @@ Detailed documentation for each component is available in the [components/](./co
 | [StudySession](./components/features/studysession.md) | `StudySession.tsx` | Study controller with SM-2 rating buttons |
 | [DeckCard](./components/features/deckcard.md) | `DeckCard.tsx` | Deck preview card with stats and actions |
 | [Navbar](./components/features/navbar.md) | `Navbar.tsx` | Top navigation with auth state handling |
+| [SkillCard](./components/features/skillcard.md) | `SkillCard.tsx` | Skill with circular score progress display |
+| [ScoreInput](./components/features/scoreinput.md) | `ScoreInput.tsx` | Modal form for recording skill scores |
+| [ProgressChart](./components/features/progresschart.md) | `ProgressChart.tsx` | Line chart for score history visualization |
+| [SkillTree](./components/features/skilltree.md) | `SkillTree.tsx` | Hierarchical tree for skill organization |
 
 ### Quick Reference
 
@@ -137,7 +141,11 @@ components/
     ├── flashcard.md    # 3D flip animation
     ├── studysession.md # SM-2 rating flow
     ├── deckcard.md     # Deck preview with hover effects
-    └── navbar.md       # Auth-aware navigation
+    ├── navbar.md       # Auth-aware navigation
+    ├── skillcard.md    # Circular score progress display
+    ├── scoreinput.md   # Score recording modal
+    ├── progresschart.md # Score history line chart
+    └── skilltree.md    # Hierarchical skill tree
 ```
 
 ---
@@ -204,17 +212,23 @@ Detailed documentation for each page template is available in the [pages/](./pag
 | [Admin](./pages/admin.md) | `src/app/dashboard/admin/page.tsx` | User, role, and permission management |
 | [Forms](./pages/forms.md) | `src/app/dashboard/decks/new/page.tsx` | Create/edit deck and card forms |
 | [Study](./pages/study.md) | `src/app/dashboard/decks/[id]/study/page.tsx` | Flashcard study session with SM-2 rating |
+| [Skills Dashboard](./pages/skills-dashboard.md) | `src/app/dashboard/skills/page.tsx` | User's tracked skills with scores |
+| [Skill Detail](./pages/skill-detail.md) | `src/app/dashboard/skills/[id]/page.tsx` | Score history and progress charts |
+| [Admin Skills](./pages/admin-skills.md) | `src/app/admin/skills/page.tsx` | Admin skill management with tree view |
 
 ### Quick Reference
 
 ```
 pages/
-├── landing.md      # Hero + feature grid layout
-├── dashboard.md    # Deck grid with empty/loading states
-├── auth.md         # Centered card with Google OAuth
-├── admin.md        # Tabbed interface for RBAC management
-├── forms.md        # Form patterns for create/edit
-└── study.md        # FlashCard study session flow
+├── landing.md          # Hero + feature grid layout
+├── dashboard.md        # Deck grid with empty/loading states
+├── auth.md             # Centered card with Google OAuth
+├── admin.md            # Tabbed interface for RBAC management
+├── forms.md            # Form patterns for create/edit
+├── study.md            # FlashCard study session flow
+├── skills-dashboard.md # Skill cards grid with filters
+├── skill-detail.md     # Score history + progress chart
+└── admin-skills.md     # Hierarchical skill tree management
 ```
 
 ---

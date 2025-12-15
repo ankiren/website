@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- US-6.1 user story with 7 acceptance criteria (Gherkin format)
+- US-6.1 demo implementation (`src/app/demo/skills/us-6-1/`)
+- Skill detail page demo (`src/app/demo/skills/us-6-1/[id]/`)
+- UI design docs for admin skills page and skill detail page
+- UI design docs for SkillTree component
+
+### Changed
+- CR-004: Refined to focus only on US-6.1 (admin skill management)
+- US-6.1: Updated spec to match approved demo (added icon, color, description fields)
+- US-6.1: Added AC-6.1.2 View Skill Detail, reordered acceptance criteria
+- Admin skills UI design: Added Tree/Grid views, icon picker, color picker details
+
 ## 0.3.0 - 2025-12-13
 
 ### Added
