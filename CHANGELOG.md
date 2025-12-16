@@ -10,12 +10,26 @@ All notable changes to this project will be documented in this file.
 - Skill detail page demo (`src/app/demo/skills/us-6-1/[id]/`)
 - UI design docs for admin skills page and skill detail page
 - UI design docs for SkillTree component
+- US-6.1 Skill Management implementation:
+  - Skills API endpoints (`/api/admin/skills`, `/api/admin/skills/[id]`)
+  - Admin skills pages (`/dashboard/admin/skills`, `/dashboard/admin/skills/[id]`)
+  - SkillTree and SkillCard components with Tree/Grid views
+  - CreateEditSkillModal, DeleteSkillModal, IconPicker components
+  - Skills database operations in d1.ts (CRUD, tree queries, search)
+  - Skills migration (0004_skills.sql)
+- E2E tests for skills management (37 tests covering all acceptance criteria)
+- E2E init scripts for staging, UAT, and production environments
+- npm scripts for E2E testing on all environments
 
 ### Changed
 - CR-004: Refined to focus only on US-6.1 (admin skill management)
 - US-6.1: Updated spec to match approved demo (added icon, color, description fields)
 - US-6.1: Added AC-6.1.2 View Skill Detail, reordered acceptance criteria
 - Admin skills UI design: Added Tree/Grid views, icon picker, color picker details
+- Global teardown: Filter test skills by pattern instead of deleting all
+
+### Fixed
+- Authorization null safety: Handle undefined roles/permissions in isAdmin/hasPermission
 
 ## 0.3.0 - 2025-12-13
 

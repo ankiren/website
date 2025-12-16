@@ -15,7 +15,12 @@
     "db:push": "prisma db push",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:uat": "BASE_URL=https://uat.ankiren.com playwright test"
+    "test:e2e:uat": "BASE_URL=https://uat.ankiren.com playwright test",
+    "test:e2e:staging": "BASE_URL=https://staging.ankiren.com playwright test",
+    "e2e:init:staging": "npx wrangler d1 execute ankiren-db-staging --remote --file=e2e/init-staging.sql",
+    "e2e:init:uat": "npx wrangler d1 execute ankiren-db-uat --remote --file=e2e/init-uat.sql",
+    "test:e2e:production": "BASE_URL=https://ankiren.com playwright test e2e/*-unauth.spec.ts",
+    "e2e:init:production": "npx wrangler d1 execute ankiren-db --remote --file=e2e/init-production.sql"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.14.4",

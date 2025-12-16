@@ -122,6 +122,24 @@ export interface RolePermission {
   createdAt: string;
 }
 
+// Skill entity
+export interface Skill {
+  id: number;
+  name: string;
+  description: string | null;
+  icon: string;
+  color: number;
+  parentId: number | null;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Skill with children for tree structure
+export interface SkillWithChildren extends Skill {
+  children?: SkillWithChildren[];
+}
+
 // Database operations
 export const db = {
   // User operations
@@ -745,6 +763,217 @@ export const db = {
           .bind(roleId, permissionId, now)
           .run();
       }
+    },
+  },
+
+  // Skill operations
+  skill: {
+    async findAll(d1: D1Database): Promise<Skill[]> {
+      const result = await d1
+        .prepare("SELECT * FROM Skill ORDER BY name ASC")
+        .all<Skill>();
+      return result.results;
+    },
+
+    async findById(d1: D1Database, id: number): Promise<Skill | null> {
+      return d1
+        .prepare("SELECT * FROM Skill WHERE id = ?")
+        .bind(id)
+        .first<Skill>();
+    },
+
+    async findByParentId(d1: D1Database, parentId: number | null): Promise<Skill[]> {
+      const result = await d1
+        .prepare(
+          parentId === null
+            ? "SELECT * FROM Skill WHERE parentId IS NULL ORDER BY name ASC"
+            : "SELECT * FROM Skill WHERE parentId = ? ORDER BY name ASC"
+        )
+        .bind(...(parentId === null ? [] : [parentId]))
+        .all<Skill>();
+      return result.results;
+    },
+
+    async create(
+      d1: D1Database,
+      data: {
+        name: string;
+        description?: string;
+        icon?: string;
+        color?: number;
+        parentId?: number | null;
+        createdBy: string;
+      }
+    ): Promise<Skill> {
+      const now = new Date().toISOString();
+      const result = await d1
+        .prepare(
+          `INSERT INTO Skill (name, description, icon, color, parentId, createdBy, createdAt, updatedAt)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+        )
+        .bind(
+          data.name,
+          data.description || null,
+          data.icon || "FileText",
+          data.color ?? 0,
+          data.parentId ?? null,
+          data.createdBy,
+          now,
+          now
+        )
+        .run();
+      return (await db.skill.findById(d1, result.meta.last_row_id))!;
+    },
+
+    async update(
+      d1: D1Database,
+      id: number,
+      data: {
+        name?: string;
+        description?: string | null;
+        icon?: string;
+        color?: number;
+        parentId?: number | null;
+      }
+    ): Promise<Skill> {
+      const now = new Date().toISOString();
+      const updates: string[] = ["updatedAt = ?"];
+      const values: unknown[] = [now];
+
+      if (data.name !== undefined) {
+        updates.push("name = ?");
+        values.push(data.name);
+      }
+      if (data.description !== undefined) {
+        updates.push("description = ?");
+        values.push(data.description);
+      }
+      if (data.icon !== undefined) {
+        updates.push("icon = ?");
+        values.push(data.icon);
+      }
+      if (data.color !== undefined) {
+        updates.push("color = ?");
+        values.push(data.color);
+      }
+      if (data.parentId !== undefined) {
+        updates.push("parentId = ?");
+        values.push(data.parentId);
+      }
+
+      values.push(id);
+      await d1
+        .prepare(`UPDATE Skill SET ${updates.join(", ")} WHERE id = ?`)
+        .bind(...values)
+        .run();
+      return (await db.skill.findById(d1, id))!;
+    },
+
+    async delete(d1: D1Database, id: number): Promise<void> {
+      // CASCADE delete will handle children
+      await d1.prepare("DELETE FROM Skill WHERE id = ?").bind(id).run();
+    },
+
+    async countChildren(d1: D1Database, parentId: number): Promise<number> {
+      const result = await d1
+        .prepare("SELECT COUNT(*) as count FROM Skill WHERE parentId = ?")
+        .bind(parentId)
+        .first<{ count: number }>();
+      return result?.count || 0;
+    },
+
+    async countAllDescendants(d1: D1Database, skillId: number): Promise<number> {
+      // Recursive CTE to count all descendants
+      const result = await d1
+        .prepare(
+          `WITH RECURSIVE descendants AS (
+            SELECT id FROM Skill WHERE parentId = ?
+            UNION ALL
+            SELECT s.id FROM Skill s INNER JOIN descendants d ON s.parentId = d.id
+          )
+          SELECT COUNT(*) as count FROM descendants`
+        )
+        .bind(skillId)
+        .first<{ count: number }>();
+      return result?.count || 0;
+    },
+
+    async getAllDescendantIds(d1: D1Database, skillId: number): Promise<number[]> {
+      const result = await d1
+        .prepare(
+          `WITH RECURSIVE descendants AS (
+            SELECT id FROM Skill WHERE parentId = ?
+            UNION ALL
+            SELECT s.id FROM Skill s INNER JOIN descendants d ON s.parentId = d.id
+          )
+          SELECT id FROM descendants`
+        )
+        .bind(skillId)
+        .all<{ id: number }>();
+      return result.results.map((r) => r.id);
+    },
+
+    async getAncestors(d1: D1Database, skillId: number): Promise<Skill[]> {
+      const result = await d1
+        .prepare(
+          `WITH RECURSIVE ancestors AS (
+            SELECT * FROM Skill WHERE id = (SELECT parentId FROM Skill WHERE id = ?)
+            UNION ALL
+            SELECT s.* FROM Skill s INNER JOIN ancestors a ON s.id = a.parentId
+          )
+          SELECT * FROM ancestors`
+        )
+        .bind(skillId)
+        .all<Skill>();
+      return result.results.reverse(); // Return from root to parent
+    },
+
+    async getDepth(d1: D1Database, skillId: number): Promise<number> {
+      const ancestors = await db.skill.getAncestors(d1, skillId);
+      return ancestors.length + 1; // +1 for the skill itself
+    },
+
+    async isDescendantOf(d1: D1Database, skillId: number, potentialAncestorId: number): Promise<boolean> {
+      const ancestors = await db.skill.getAncestors(d1, skillId);
+      return ancestors.some((a) => a.id === potentialAncestorId);
+    },
+
+    async buildTree(d1: D1Database, skills?: Skill[]): Promise<SkillWithChildren[]> {
+      const allSkills = skills || await db.skill.findAll(d1);
+      const skillMap = new Map<number, SkillWithChildren>();
+      const rootSkills: SkillWithChildren[] = [];
+
+      // First pass: create map
+      for (const skill of allSkills) {
+        skillMap.set(skill.id, { ...skill, children: [] });
+      }
+
+      // Second pass: build tree
+      for (const skill of allSkills) {
+        const skillWithChildren = skillMap.get(skill.id)!;
+        if (skill.parentId === null) {
+          rootSkills.push(skillWithChildren);
+        } else {
+          const parent = skillMap.get(skill.parentId);
+          if (parent) {
+            parent.children = parent.children || [];
+            parent.children.push(skillWithChildren);
+          } else {
+            // Orphan skill (parent doesn't exist), treat as root
+            rootSkills.push(skillWithChildren);
+          }
+        }
+      }
+
+      return rootSkills;
+    },
+
+    async search(d1: D1Database, query: string): Promise<Skill[]> {
+      const result = await d1
+        .prepare("SELECT * FROM Skill WHERE name LIKE ? ORDER BY name ASC")
+        .bind(`%${query}%`)
+        .all<Skill>();
+      return result.results;
     },
   },
 };
