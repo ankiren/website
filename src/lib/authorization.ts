@@ -5,17 +5,18 @@ import { auth } from "@/lib/auth";
 /**
  * Check if user has a specific permission
  */
-export function hasPermission(permissions: string[], required: string): boolean {
-  return permissions.includes(required);
+export function hasPermission(permissions: string[] | undefined, required: string): boolean {
+  return permissions?.includes(required) ?? false;
 }
 
 /**
  * Check if user has any of the required permissions
  */
 export function hasAnyPermission(
-  permissions: string[],
+  permissions: string[] | undefined,
   required: string[]
 ): boolean {
+  if (!permissions) return false;
   return required.some((p) => permissions.includes(p));
 }
 
@@ -32,15 +33,15 @@ export function hasAllPermissions(
 /**
  * Check if user has a specific role
  */
-export function hasRole(roles: string[], required: string): boolean {
-  return roles.includes(required);
+export function hasRole(roles: string[] | undefined, required: string): boolean {
+  return roles?.includes(required) ?? false;
 }
 
 /**
  * Check if user is admin (has admin role)
  */
-export function isAdmin(roles: string[]): boolean {
-  return roles.includes("admin");
+export function isAdmin(roles: string[] | undefined): boolean {
+  return roles?.includes("admin") ?? false;
 }
 
 /**

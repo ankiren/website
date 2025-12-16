@@ -55,7 +55,7 @@ export function Modal({
         <div
           className={`relative w-full ${sizeClasses[size]} transform rounded-lg bg-white shadow-xl transition-all`}
         >
-          <div className="flex items-center justify-between border-b px-6 py-4">
+          <div className="flex items-center justify-between px-6 py-4">
             <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
             <button
               onClick={onClose}

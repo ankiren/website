@@ -2,23 +2,24 @@
 
 **ID:** EPIC-6
 **Status:** Planned
-**Description:** Enable users to track skills they are developing with progress monitoring and learning activity logging.
+**Description:** Enable skill tracking with score assessment, progress history, and admin-managed skill hierarchy.
 
 ---
 
 ## Overview
 
-Skill Management module allows users to define, organize, and track skills they want to learn. Users can track progress and proficiency levels, set learning goals and milestones, and log learning activities. This complements the existing flashcard learning system with comprehensive skill tracking.
+Skill Management module allows admins to create and manage a hierarchical skill structure. Users can track their proficiency scores for each skill, record assessments from various sources (tests, practice, assessments), and view their progress history over time. This complements the existing flashcard learning system with comprehensive skill score tracking.
 
 ### Goals
-- Allow users to define, organize, and track skills they want to learn
-- Track progress and proficiency levels for each skill
-- Set learning goals and milestones
-- Complement existing flashcard learning with skill tracking
+- Allow admins to create and manage hierarchical skills
+- Enable users to track their current score for each skill
+- Record score history with source tracking (test/practice/assessment)
+- Visualize skill progress over time
+- Complement existing flashcard learning with skill assessment
 
 ### Scope
-- **In Scope:** Skill CRUD, categories, proficiency levels, learning activities, goals, progress dashboard
-- **Out of Scope:** AI-powered skill recommendations, integration with external learning platforms, certifications
+- **In Scope:** Skill CRUD (admin), user skill scores, score history tracking, progress visualization
+- **Out of Scope:** AI-powered skill recommendations, integration with external assessment platforms, certifications
 
 ---
 
@@ -26,14 +27,14 @@ Skill Management module allows users to define, organize, and track skills they 
 
 | ID | Name | Status | Priority | File |
 |----|------|--------|----------|------|
-| US-6.1 | Skill CRUD | Planned | Critical | [US-6-1.md](US-6-1.md) |
-| US-6.2 | Skill Categories | Planned | Critical | [US-6-2.md](US-6-2.md) |
-| US-6.3 | Proficiency Levels | Planned | Critical | [US-6-3.md](US-6-3.md) |
-| US-6.4 | Learning Activities | Planned | High | [US-6-4.md](US-6-4.md) |
-| US-6.5 | Goals & Milestones | Planned | High | [US-6-5.md](US-6-5.md) |
-| US-6.6 | Progress Dashboard | Planned | High | [US-6-6.md](US-6-6.md) |
-| US-6.7 | Category Management | Planned | Medium | [US-6-7.md](US-6-7.md) |
-| US-6.8 | Progress Analytics | Planned | Low | [US-6-8.md](US-6-8.md) |
+| US-6.1 | Skill Management (Admin) | Planned | Critical | [US-6-1.md](US-6-1.md) |
+| US-6.2 | View Available Skills | Planned | Critical | [US-6-2.md](US-6-2.md) |
+| US-6.3 | Record Skill Score | Planned | Critical | [US-6-3.md](US-6-3.md) |
+| US-6.4 | View Score History | Planned | High | [US-6-4.md](US-6-4.md) |
+| US-6.5 | My Skills Dashboard | Planned | High | [US-6-5.md](US-6-5.md) |
+| US-6.6 | Progress Visualization | Planned | High | [US-6-6.md](US-6-6.md) |
+| US-6.7 | Skill Score Analytics | Planned | Medium | [US-6-7.md](US-6-7.md) |
+| US-6.8 | Bulk Score Import | Planned | Low | [US-6-8.md](US-6-8.md) |
 
 ---
 
@@ -45,113 +46,110 @@ Skill Management module allows users to define, organize, and track skills they 
 
 ### Database Schema
 
-```sql
-CREATE TABLE Category (
-  id TEXT PRIMARY KEY,
-  userId TEXT REFERENCES User(id),
-  name TEXT NOT NULL,
-  color TEXT DEFAULT '#6366f1',
-  icon TEXT,
-  createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(userId, name)
-);
+```mermaid
+erDiagram
+    USERS {
+        int id PK
+        string email UK
+        enum role "admin | user"
+        string name
+        string image
+        datetime createdAt
+    }
 
-CREATE TABLE Skill (
-  id TEXT PRIMARY KEY,
-  userId TEXT REFERENCES User(id),
-  categoryId TEXT REFERENCES Category(id),
-  name TEXT NOT NULL,
-  description TEXT,
-  currentLevel TEXT DEFAULT 'beginner',
-  targetLevel TEXT DEFAULT 'advanced',
-  totalMinutes INTEGER DEFAULT 0,
-  createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+    SKILLS {
+        int id PK
+        string name "Reading, Listening, Speaking, Writing, etc."
+        int parent_id FK "Self-reference (Skill -> Sub-skill)"
+        int created_by FK "Admin who created"
+        datetime createdAt
+    }
 
-CREATE TABLE LearningActivity (
-  id TEXT PRIMARY KEY,
-  skillId TEXT REFERENCES Skill(id),
-  userId TEXT REFERENCES User(id),
-  activityType TEXT NOT NULL,
-  title TEXT,
-  notes TEXT,
-  durationMinutes INTEGER NOT NULL,
-  activityDate DATE DEFAULT CURRENT_DATE,
-  createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+    USERS_SKILLS {
+        int id PK
+        int user_id FK
+        int skill_id FK
+        float current_score "Latest score (0-100)"
+        datetime last_assessed_at
+    }
 
-CREATE TABLE Goal (
-  id TEXT PRIMARY KEY,
-  skillId TEXT REFERENCES Skill(id),
-  userId TEXT REFERENCES User(id),
-  title TEXT NOT NULL,
-  description TEXT,
-  targetDate DATE,
-  isCompleted BOOLEAN DEFAULT FALSE,
-  completedAt DATETIME,
-  createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+    USERS_SKILLS_HISTORY {
+        int id PK
+        int user_skill_id FK
+        float score "Score at this point (0-100)"
+        enum source "test | practice | assessment"
+        text note "Optional remarks"
+        datetime created_at
+    }
 
-CREATE TABLE LevelHistory (
-  id TEXT PRIMARY KEY,
-  skillId TEXT REFERENCES Skill(id),
-  fromLevel TEXT,
-  toLevel TEXT NOT NULL,
-  changedAt DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+    %% Relationships
+    SKILLS ||--o{ SKILLS : "parent (Skill -> Sub-skill)"
+    USERS ||--o{ SKILLS : "admin creates/manages"
+    USERS ||--o{ USERS_SKILLS : "has scores"
+    SKILLS ||--o{ USERS_SKILLS : "scored by users"
+    USERS_SKILLS ||--o{ USERS_SKILLS_HISTORY : "tracks progress"
 ```
+
+### Permissions
+
+| Actor | Action | Resource |
+|-------|--------|----------|
+| Admin | Create, Update, Delete | Skills |
+| Admin | View | All users' skill scores |
+| User | View | Available skills |
+| User | Record | Own skill scores |
+| User | View | Own score history |
 
 ### API Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/skills` | List user's skills |
-| POST | `/api/skills` | Create new skill |
-| PUT | `/api/skills/:id` | Update skill |
-| DELETE | `/api/skills/:id` | Delete skill |
-| GET | `/api/categories` | List user's categories |
-| POST | `/api/categories` | Create category |
-| PUT | `/api/categories/:id` | Update category |
-| DELETE | `/api/categories/:id` | Delete category |
-| GET | `/api/skills/:id/activities` | List skill activities |
-| POST | `/api/activities` | Log learning activity |
-| GET | `/api/skills/:id/goals` | List skill goals |
-| POST | `/api/goals` | Create goal |
-| PUT | `/api/goals/:id` | Update goal |
-| GET | `/api/dashboard/stats` | Dashboard statistics |
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|--------|
+| GET | `/api/admin/skills` | List all skills (with hierarchy) | Admin |
+| POST | `/api/admin/skills` | Create skill | Admin |
+| PUT | `/api/admin/skills/:id` | Update skill | Admin |
+| DELETE | `/api/admin/skills/:id` | Delete skill | Admin |
+| GET | `/api/admin/users/:id/skills` | View user's skill scores | Admin |
+| GET | `/api/skills` | List available skills | User |
+| GET | `/api/skills/:id` | Get skill details | User |
+| GET | `/api/me/skills` | List my skill scores | User |
+| POST | `/api/me/skills` | Add skill to track | User |
+| PUT | `/api/me/skills/:skillId` | Update my skill score | User |
+| DELETE | `/api/me/skills/:skillId` | Remove skill from tracking | User |
+| GET | `/api/me/skills/:skillId/history` | Get score history | User |
+| POST | `/api/me/skills/:skillId/history` | Record new score entry | User |
 
-### Proficiency Levels
+### Score Sources
 
-| Level | Description |
-|-------|-------------|
-| Beginner | Just started learning |
-| Elementary | Basic understanding |
-| Intermediate | Can apply with guidance |
-| Advanced | Can apply independently |
-| Expert | Can teach others |
+| Source | Description |
+|--------|-------------|
+| test | Formal test or examination |
+| practice | Practice session or exercise |
+| assessment | Self-assessment or informal evaluation |
 
-### Activity Types
+### Score Range
 
-| Type | Description |
-|------|-------------|
-| course | Online course or tutorial |
-| practice | Hands-on practice |
-| project | Real project work |
-| reading | Books, articles, documentation |
-| video | Video content |
-| other | Other learning activity |
+| Range | Level | Description |
+|-------|-------|-------------|
+| 0-20 | Beginner | Just started, minimal proficiency |
+| 21-40 | Elementary | Basic understanding |
+| 41-60 | Intermediate | Can apply with some guidance |
+| 61-80 | Advanced | Can apply independently |
+| 81-100 | Expert | Mastery level, can teach others |
 
 ### Files (Proposed)
 
-- `src/app/api/skills/route.ts` - Skill CRUD endpoints
-- `src/app/api/categories/route.ts` - Category endpoints
-- `src/app/api/activities/route.ts` - Activity logging endpoints
-- `src/app/api/goals/route.ts` - Goal endpoints
-- `src/app/dashboard/skills/page.tsx` - Skills dashboard
-- `src/components/SkillCard.tsx` - Skill display component
-- `src/components/ActivityLogger.tsx` - Activity logging form
-- `src/components/ProgressChart.tsx` - Progress visualization
+- `src/app/api/admin/skills/route.ts` - Admin skill CRUD endpoints
+- `src/app/api/admin/users/[id]/skills/route.ts` - Admin view user scores
+- `src/app/api/skills/route.ts` - List available skills
+- `src/app/api/me/skills/route.ts` - User skill scores endpoints
+- `src/app/api/me/skills/[skillId]/history/route.ts` - Score history endpoints
+- `src/app/dashboard/skills/page.tsx` - My skills dashboard
+- `src/app/dashboard/skills/[id]/page.tsx` - Skill detail with history
+- `src/app/admin/skills/page.tsx` - Admin skill management
+- `src/components/SkillCard.tsx` - Skill with score display
+- `src/components/ScoreInput.tsx` - Score recording form
+- `src/components/ProgressChart.tsx` - Score history visualization
+- `src/components/SkillTree.tsx` - Hierarchical skill display
 
 ---
 
@@ -161,12 +159,12 @@ CREATE TABLE LevelHistory (
 |-------|-------|--------|------------|--------|-------|
 | US-6.1 | 50% | 3 | 80% | 1w | 120.0 |
 | US-6.2 | 50% | 2 | 80% | 0.5w | 160.0 |
-| US-6.3 | 50% | 2 | 80% | 0.5w | 160.0 |
+| US-6.3 | 50% | 3 | 80% | 1w | 120.0 |
 | US-6.4 | 50% | 2 | 80% | 1w | 80.0 |
-| US-6.5 | 40% | 2 | 80% | 1w | 64.0 |
-| US-6.6 | 50% | 2 | 80% | 1w | 80.0 |
+| US-6.5 | 50% | 2 | 80% | 1w | 80.0 |
+| US-6.6 | 40% | 2 | 80% | 1w | 64.0 |
 | US-6.7 | 30% | 1 | 80% | 0.5w | 48.0 |
-| US-6.8 | 30% | 1 | 80% | 0.5w | 48.0 |
+| US-6.8 | 20% | 1 | 60% | 1w | 12.0 |
 
 **Epic Score:** (50 × 2 × 0.8) / 6 = **13.3**
 

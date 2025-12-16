@@ -19,6 +19,30 @@ teardown("cleanup test data", async ({ page }) => {
     return;
   }
 
+  // Clean up test-created skills
+  console.log("Cleaning up test-created skills...");
+  const skillsResponse = await page.request.get("/api/admin/skills");
+  if (skillsResponse.ok()) {
+    const skillsData = await skillsResponse.json();
+    // Only delete skills that match test patterns (contain timestamps or test prefixes)
+    // Test skill names contain timestamps like "Test Skill 1765849790800"
+    const testSkillPattern = /\d{13}|^Test |^API Test|^Detail |^Hero |^Stats |^Breadcrumb |^Edit |^Del|^Warn|^Hierarchy |^Sub-skill|^Circular |^Updated |^GP\d|^P\d|^C\d/;
+    const allSkills = skillsData.skills || [];
+    const testSkills = allSkills.filter((s: { name: string }) =>
+      testSkillPattern.test(s.name)
+    );
+    // Sort by id descending to delete children before parents
+    const sortedSkills = [...testSkills].sort(
+      (a: { id: number }, b: { id: number }) => b.id - a.id
+    );
+
+    for (const skill of sortedSkills) {
+      console.log(`  Deleting test skill: ${skill.name}`);
+      await page.request.delete(`/api/admin/skills/${skill.id}`);
+    }
+    console.log(`  Deleted ${sortedSkills.length} test skills`);
+  }
+
   // Clean up test-created roles (non-system roles)
   console.log("Cleaning up test-created roles...");
   const rolesResponse = await page.request.get("/api/admin/roles");
