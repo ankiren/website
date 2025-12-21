@@ -21,6 +21,9 @@ export default function Navbar() {
                 <Link href="/dashboard">
                   <Button variant="ghost">Dashboard</Button>
                 </Link>
+                <Link href="/dashboard/courses">
+                  <Button variant="ghost">Courses</Button>
+                </Link>
                 {session.user?.roles?.includes("admin") && (
                   <Link href="/dashboard/admin">
                     <Button variant="ghost">Admin</Button>
