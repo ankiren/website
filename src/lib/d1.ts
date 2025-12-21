@@ -167,6 +167,41 @@ export interface CourseWithStats extends Course {
   enrollmentCount?: number;
 }
 
+// Personal Access Token entity
+export interface PersonalAccessToken {
+  id: string;
+  userId: string;
+  name: string;
+  tokenHash: string;
+  lastUsedAt: string | null;
+  expiresAt: string | null;
+  createdAt: string;
+}
+
+// PAT without sensitive hash (for listing)
+export interface PersonalAccessTokenInfo {
+  id: string;
+  name: string;
+  lastUsedAt: string | null;
+  expiresAt: string | null;
+  createdAt: string;
+}
+
+// Helper to generate PAT token and hash
+export async function generatePAT(): Promise<{ token: string; hash: string }> {
+  const randomBytes = crypto.getRandomValues(new Uint8Array(24));
+  const token = 'ank_' + Array.from(randomBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+  const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token));
+  const hash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return { token, hash };
+}
+
+// Helper to hash a token for lookup
+export async function hashToken(token: string): Promise<string> {
+  const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token));
+  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 // Database operations
 export const db = {
   // User operations
@@ -1191,6 +1226,78 @@ export const db = {
     async isEnrolled(d1: D1Database, userId: string, courseId: number): Promise<boolean> {
       const enrollment = await db.enrollment.findByUserAndCourse(d1, userId, courseId);
       return enrollment !== null && enrollment.status === "active";
+    },
+  },
+
+  // Personal Access Token operations
+  pat: {
+    async findByUserId(d1: D1Database, userId: string): Promise<PersonalAccessTokenInfo[]> {
+      const result = await d1
+        .prepare("SELECT id, name, lastUsedAt, expiresAt, createdAt FROM PersonalAccessToken WHERE userId = ? ORDER BY createdAt DESC")
+        .bind(userId)
+        .all<PersonalAccessTokenInfo>();
+      return result.results;
+    },
+
+    async findByTokenHash(d1: D1Database, tokenHash: string): Promise<PersonalAccessToken | null> {
+      return d1
+        .prepare("SELECT * FROM PersonalAccessToken WHERE tokenHash = ?")
+        .bind(tokenHash)
+        .first<PersonalAccessToken>();
+    },
+
+    async findById(d1: D1Database, id: string): Promise<PersonalAccessToken | null> {
+      return d1
+        .prepare("SELECT * FROM PersonalAccessToken WHERE id = ?")
+        .bind(id)
+        .first<PersonalAccessToken>();
+    },
+
+    async create(
+      d1: D1Database,
+      data: {
+        userId: string;
+        name: string;
+        tokenHash: string;
+        expiresAt?: string | null;
+      }
+    ): Promise<PersonalAccessTokenInfo> {
+      const id = generateId();
+      const now = new Date().toISOString();
+      await d1
+        .prepare(
+          "INSERT INTO PersonalAccessToken (id, userId, name, tokenHash, expiresAt, createdAt) VALUES (?, ?, ?, ?, ?, ?)"
+        )
+        .bind(id, data.userId, data.name, data.tokenHash, data.expiresAt || null, now)
+        .run();
+      return {
+        id,
+        name: data.name,
+        lastUsedAt: null,
+        expiresAt: data.expiresAt || null,
+        createdAt: now,
+      };
+    },
+
+    async delete(d1: D1Database, id: string, userId: string): Promise<boolean> {
+      const result = await d1
+        .prepare("DELETE FROM PersonalAccessToken WHERE id = ? AND userId = ?")
+        .bind(id, userId)
+        .run();
+      return result.meta.changes > 0;
+    },
+
+    async updateLastUsed(d1: D1Database, id: string): Promise<void> {
+      const now = new Date().toISOString();
+      await d1
+        .prepare("UPDATE PersonalAccessToken SET lastUsedAt = ? WHERE id = ?")
+        .bind(now, id)
+        .run();
+    },
+
+    async isExpired(pat: PersonalAccessToken): Promise<boolean> {
+      if (!pat.expiresAt) return false;
+      return new Date(pat.expiresAt) < new Date();
     },
   },
 };
