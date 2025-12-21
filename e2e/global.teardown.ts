@@ -78,5 +78,23 @@ teardown("cleanup test data", async ({ page }) => {
     console.log(`  Deleted ${testPermissions?.length || 0} test permissions`);
   }
 
+  // Clean up test-created courses
+  console.log("Cleaning up test-created courses...");
+  const coursesResponse = await page.request.get("/api/admin/courses");
+  if (coursesResponse.ok()) {
+    const coursesData = await coursesResponse.json();
+    // Test courses have patterns with timestamps or test prefixes
+    const testCoursePattern = /\d{13}|^Test Course|^Published Course|^API Test Course|^Menu Test|^DelMenu Test|^Enroll Test|^Double Enroll|^Unenroll Test|^Draft Only|^Published Only|^Draft Course|^Draft Enroll|^Detail Test|^Update Test/;
+    const testCourses = coursesData.courses?.filter((c: { name: string }) =>
+      testCoursePattern.test(c.name)
+    );
+
+    for (const course of testCourses || []) {
+      console.log(`  Deleting test course: ${course.name}`);
+      await page.request.delete(`/api/admin/courses/${course.id}`);
+    }
+    console.log(`  Deleted ${testCourses?.length || 0} test courses`);
+  }
+
   console.log("Global teardown complete - test data cleaned up");
 });

@@ -140,6 +140,33 @@ export interface SkillWithChildren extends Skill {
   children?: SkillWithChildren[];
 }
 
+// Course entity
+export interface Course {
+  id: number;
+  name: string;
+  description: string | null;
+  imageUrl: string | null;
+  status: "draft" | "published" | "archived";
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Enrollment entity (User joins Course)
+export interface Enrollment {
+  id: number;
+  userId: string;
+  courseId: number;
+  status: "active" | "completed" | "dropped";
+  enrolledAt: string;
+  completedAt: string | null;
+}
+
+// Course with enrollment count
+export interface CourseWithStats extends Course {
+  enrollmentCount?: number;
+}
+
 // Database operations
 export const db = {
   // User operations
@@ -974,6 +1001,196 @@ export const db = {
         .bind(`%${query}%`)
         .all<Skill>();
       return result.results;
+    },
+  },
+
+  // Course operations
+  course: {
+    async findAll(d1: D1Database, status?: string): Promise<Course[]> {
+      const query = status
+        ? "SELECT * FROM Course WHERE status = ? ORDER BY createdAt DESC"
+        : "SELECT * FROM Course ORDER BY createdAt DESC";
+      const result = await d1
+        .prepare(query)
+        .bind(...(status ? [status] : []))
+        .all<Course>();
+      return result.results;
+    },
+
+    async findById(d1: D1Database, id: number): Promise<Course | null> {
+      return d1
+        .prepare("SELECT * FROM Course WHERE id = ?")
+        .bind(id)
+        .first<Course>();
+    },
+
+    async findPublished(d1: D1Database): Promise<Course[]> {
+      const result = await d1
+        .prepare("SELECT * FROM Course WHERE status = 'published' ORDER BY createdAt DESC")
+        .all<Course>();
+      return result.results;
+    },
+
+    async create(
+      d1: D1Database,
+      data: {
+        name: string;
+        description?: string;
+        imageUrl?: string;
+        status?: "draft" | "published" | "archived";
+        createdBy: string;
+      }
+    ): Promise<Course> {
+      const now = new Date().toISOString();
+      const result = await d1
+        .prepare(
+          `INSERT INTO Course (name, description, imageUrl, status, createdBy, createdAt, updatedAt)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`
+        )
+        .bind(
+          data.name,
+          data.description || null,
+          data.imageUrl || null,
+          data.status || "draft",
+          data.createdBy,
+          now,
+          now
+        )
+        .run();
+      return (await db.course.findById(d1, result.meta.last_row_id))!;
+    },
+
+    async update(
+      d1: D1Database,
+      id: number,
+      data: {
+        name?: string;
+        description?: string | null;
+        imageUrl?: string | null;
+        status?: "draft" | "published" | "archived";
+      }
+    ): Promise<Course> {
+      const now = new Date().toISOString();
+      const updates: string[] = ["updatedAt = ?"];
+      const values: unknown[] = [now];
+
+      if (data.name !== undefined) {
+        updates.push("name = ?");
+        values.push(data.name);
+      }
+      if (data.description !== undefined) {
+        updates.push("description = ?");
+        values.push(data.description);
+      }
+      if (data.imageUrl !== undefined) {
+        updates.push("imageUrl = ?");
+        values.push(data.imageUrl);
+      }
+      if (data.status !== undefined) {
+        updates.push("status = ?");
+        values.push(data.status);
+      }
+
+      values.push(id);
+      await d1
+        .prepare(`UPDATE Course SET ${updates.join(", ")} WHERE id = ?`)
+        .bind(...values)
+        .run();
+      return (await db.course.findById(d1, id))!;
+    },
+
+    async delete(d1: D1Database, id: number): Promise<void> {
+      await d1.prepare("DELETE FROM Course WHERE id = ?").bind(id).run();
+    },
+
+    async search(d1: D1Database, query: string): Promise<Course[]> {
+      const result = await d1
+        .prepare("SELECT * FROM Course WHERE name LIKE ? ORDER BY name ASC")
+        .bind(`%${query}%`)
+        .all<Course>();
+      return result.results;
+    },
+
+    async getEnrollmentCount(d1: D1Database, courseId: number): Promise<number> {
+      const result = await d1
+        .prepare("SELECT COUNT(*) as count FROM Enrollment WHERE courseId = ? AND status = 'active'")
+        .bind(courseId)
+        .first<{ count: number }>();
+      return result?.count || 0;
+    },
+  },
+
+  // Enrollment operations
+  enrollment: {
+    async findByUserId(d1: D1Database, userId: string): Promise<Enrollment[]> {
+      const result = await d1
+        .prepare("SELECT * FROM Enrollment WHERE userId = ? ORDER BY enrolledAt DESC")
+        .bind(userId)
+        .all<Enrollment>();
+      return result.results;
+    },
+
+    async findByCourseId(d1: D1Database, courseId: number): Promise<Enrollment[]> {
+      const result = await d1
+        .prepare("SELECT * FROM Enrollment WHERE courseId = ? ORDER BY enrolledAt DESC")
+        .bind(courseId)
+        .all<Enrollment>();
+      return result.results;
+    },
+
+    async findByUserAndCourse(d1: D1Database, userId: string, courseId: number): Promise<Enrollment | null> {
+      return d1
+        .prepare("SELECT * FROM Enrollment WHERE userId = ? AND courseId = ?")
+        .bind(userId, courseId)
+        .first<Enrollment>();
+    },
+
+    async create(
+      d1: D1Database,
+      data: {
+        userId: string;
+        courseId: number;
+      }
+    ): Promise<Enrollment> {
+      const now = new Date().toISOString();
+      const result = await d1
+        .prepare(
+          `INSERT INTO Enrollment (userId, courseId, status, enrolledAt)
+           VALUES (?, ?, 'active', ?)`
+        )
+        .bind(data.userId, data.courseId, now)
+        .run();
+      return (await d1
+        .prepare("SELECT * FROM Enrollment WHERE id = ?")
+        .bind(result.meta.last_row_id)
+        .first<Enrollment>())!;
+    },
+
+    async updateStatus(
+      d1: D1Database,
+      userId: string,
+      courseId: number,
+      status: "active" | "completed" | "dropped"
+    ): Promise<Enrollment | null> {
+      const now = new Date().toISOString();
+      const completedAt = status === "completed" ? now : null;
+      await d1
+        .prepare("UPDATE Enrollment SET status = ?, completedAt = ? WHERE userId = ? AND courseId = ?")
+        .bind(status, completedAt, userId, courseId)
+        .run();
+      return db.enrollment.findByUserAndCourse(d1, userId, courseId);
+    },
+
+    async delete(d1: D1Database, userId: string, courseId: number): Promise<void> {
+      await d1
+        .prepare("DELETE FROM Enrollment WHERE userId = ? AND courseId = ?")
+        .bind(userId, courseId)
+        .run();
+    },
+
+    async isEnrolled(d1: D1Database, userId: string, courseId: number): Promise<boolean> {
+      const enrollment = await db.enrollment.findByUserAndCourse(d1, userId, courseId);
+      return enrollment !== null && enrollment.status === "active";
     },
   },
 };

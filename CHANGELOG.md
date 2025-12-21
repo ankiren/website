@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- Epic 8: Course Management feature
+  - Admin course management UI (`/dashboard/admin/courses`)
+  - Course CRUD API endpoints (`/api/admin/courses`)
+  - Student courses listing (`/dashboard/courses`)
+  - Course enrollment/unenrollment API (`/api/courses/[id]/enroll`)
+  - User enrollments API (`/api/me/enrollments`)
+  - Course and Enrollment database tables (migration 0005)
+  - E2E tests for courses (33 tests)
+- Courses link in navbar for authenticated users
+- Course quick link in admin dashboard
+
 ## 0.4.0 - 2025-12-21
 
 ### Added
