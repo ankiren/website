@@ -78,6 +78,24 @@ teardown("cleanup test data", async ({ page }) => {
     console.log(`  Deleted ${testPermissions?.length || 0} test permissions`);
   }
 
+  // Clean up test-created tokens (PAT)
+  console.log("Cleaning up test-created tokens...");
+  const tokensResponse = await page.request.get("/api/me/tokens");
+  if (tokensResponse.ok()) {
+    const tokensData = await tokensResponse.json();
+    // Test tokens have patterns with "E2E Test Token" prefix
+    const testTokenPattern = /^E2E Test Token/;
+    const testTokens = tokensData.tokens?.filter((t: { name: string }) =>
+      testTokenPattern.test(t.name)
+    );
+
+    for (const token of testTokens || []) {
+      console.log(`  Deleting test token: ${token.name}`);
+      await page.request.delete(`/api/me/tokens/${token.id}`);
+    }
+    console.log(`  Deleted ${testTokens?.length || 0} test tokens`);
+  }
+
   // Clean up test-created courses
   console.log("Cleaning up test-created courses...");
   const coursesResponse = await page.request.get("/api/admin/courses");

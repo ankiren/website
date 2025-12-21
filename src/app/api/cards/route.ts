@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { authWithPAT } from "@/lib/auth";
 import { getD1, db } from "@/lib/d1";
 
 export async function POST(request: Request) {
   try {
-    const session = await auth();
+    const session = await authWithPAT(request);
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

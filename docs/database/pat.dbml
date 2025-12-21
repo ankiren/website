@@ -1,0 +1,51 @@
+// Personal Access Token Database Schema
+// DBML Documentation: https://dbml.dbdiagram.io/docs
+
+Project pat {
+  database_type: 'SQLite'
+  Note: 'Personal Access Tokens for API authentication'
+}
+
+// =============================================================================
+// TABLES
+// =============================================================================
+
+Table PersonalAccessToken {
+  id TEXT [pk, note: 'CUID identifier']
+  userId TEXT [not null, ref: > User.id, note: 'Owner reference']
+  name TEXT [not null, note: 'Token display name']
+  tokenHash TEXT [not null, note: 'SHA-256 hash of token']
+  lastUsedAt TEXT [note: 'Last API call timestamp']
+  expiresAt TEXT [note: 'Optional expiration date']
+  createdAt TEXT [not null, default: `datetime('now')`, note: 'Creation timestamp']
+
+  indexes {
+    userId
+    tokenHash
+  }
+
+  Note: 'API tokens for programmatic access'
+}
+
+// =============================================================================
+// REFERENCE TABLES
+// =============================================================================
+
+Table User {
+  id TEXT [pk]
+  email TEXT [unique, not null]
+  name TEXT
+
+  Note: 'Reference: see core.dbml'
+}
+
+// =============================================================================
+// TOKEN FORMAT
+// =============================================================================
+
+// Token: ank_[48 hex chars from 24 random bytes]
+// Example: ank_a1b2c3d4e5f6...
+// Length: 52 characters (4 prefix + 48 hex)
+//
+// Storage: Only SHA-256 hash stored, plain token shown once on creation
+// Auth: Authorization: Bearer ank_xxx

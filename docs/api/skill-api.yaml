@@ -1,0 +1,166 @@
+openapi: 3.0.3
+info:
+  title: Ankiren Skill API
+  description: Skill Management API (hierarchical skill tree)
+  version: 1.0.0
+
+servers:
+  - url: https://ankiren.com
+    description: Production
+  - url: https://staging.ankiren.com
+    description: Staging
+  - url: https://uat.ankiren.com
+    description: UAT
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: next-auth.session-token
+
+  schemas:
+    Skill:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        parentId:
+          type: string
+          nullable: true
+        level:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    SkillTree:
+      allOf:
+        - $ref: "#/components/schemas/Skill"
+        - type: object
+          properties:
+            children:
+              type: array
+              items:
+                $ref: "#/components/schemas/SkillTree"
+
+    CreateSkillRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        parentId:
+          type: string
+          nullable: true
+
+security:
+  - bearerAuth: []
+  - cookieAuth: []
+
+paths:
+  /api/admin/skills:
+    get:
+      tags:
+        - Skills
+      summary: List all skills
+      parameters:
+        - name: tree
+          in: query
+          schema:
+            type: boolean
+          description: Return as tree structure
+      responses:
+        "200":
+          description: Skill list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  skills:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Skill"
+        "403":
+          description: Forbidden
+
+    post:
+      tags:
+        - Skills
+      summary: Create skill
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSkillRequest"
+      responses:
+        "201":
+          description: Skill created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Skill"
+        "403":
+          description: Forbidden
+
+  /api/admin/skills/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+
+    get:
+      tags:
+        - Skills
+      summary: Get skill
+      responses:
+        "200":
+          description: Skill details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Skill"
+
+    put:
+      tags:
+        - Skills
+      summary: Update skill
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSkillRequest"
+      responses:
+        "200":
+          description: Skill updated
+
+    delete:
+      tags:
+        - Skills
+      summary: Delete skill
+      responses:
+        "200":
+          description: Skill deleted
+
+tags:
+  - name: Skills
+    description: Skill tree management (Admin only)

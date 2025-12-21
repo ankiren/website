@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { authWithPAT } from "@/lib/auth";
 import { getD1, db, Course, Enrollment } from "@/lib/d1";
 
 interface EnrollmentWithCourse extends Enrollment {
@@ -7,9 +7,9 @@ interface EnrollmentWithCourse extends Enrollment {
 }
 
 // GET /api/me/enrollments - Get current user's enrollments
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const session = await auth();
+    const session = await authWithPAT(request);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

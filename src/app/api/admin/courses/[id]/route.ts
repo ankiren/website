@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { authWithPAT } from "@/lib/auth";
 import { getD1, db } from "@/lib/d1";
 import { isAdmin } from "@/lib/authorization";
 
@@ -10,7 +10,7 @@ interface RouteParams {
 // GET /api/admin/courses/[id] - Get course by ID
 export async function GET(request: Request, { params }: RouteParams) {
   try {
-    const session = await auth();
+    const session = await authWithPAT(request);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -49,7 +49,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 // PUT /api/admin/courses/[id] - Update course
 export async function PUT(request: Request, { params }: RouteParams) {
   try {
-    const session = await auth();
+    const session = await authWithPAT(request);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -120,7 +120,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 // DELETE /api/admin/courses/[id] - Delete course
 export async function DELETE(request: Request, { params }: RouteParams) {
   try {
-    const session = await auth();
+    const session = await authWithPAT(request);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

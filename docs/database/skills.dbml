@@ -1,0 +1,47 @@
+// Skills Management Database Schema
+// DBML Documentation: https://dbml.dbdiagram.io/docs
+
+Project skills {
+  database_type: 'SQLite'
+  Note: 'Hierarchical skill tree for Ankiren'
+}
+
+// =============================================================================
+// TABLES
+// =============================================================================
+
+Table Skill {
+  id TEXT [pk, note: 'CUID identifier']
+  name TEXT [not null, note: 'Skill name']
+  description TEXT [note: 'Skill description']
+  parentId TEXT [ref: > Skill.id, note: 'Parent skill (null = root)']
+  level INTEGER [not null, default: 0, note: 'Depth in tree (0 = root)']
+  createdAt TEXT [not null, default: `datetime('now')`, note: 'ISO timestamp']
+  updatedAt TEXT [not null, default: `datetime('now')`, note: 'ISO timestamp']
+
+  indexes {
+    parentId
+    level
+  }
+
+  Note: 'Hierarchical skill tree structure'
+}
+
+// =============================================================================
+// TREE STRUCTURE
+// =============================================================================
+
+// Skills form a hierarchical tree:
+//
+// Programming (level 0)
+// ├── Frontend (level 1)
+// │   ├── React (level 2)
+// │   └── Vue (level 2)
+// └── Backend (level 1)
+//     ├── Node.js (level 2)
+//     └── Python (level 2)
+//
+// Recursive queries:
+// - Get all children: WHERE parentId = ?
+// - Get all descendants: WITH RECURSIVE CTE
+// - Get ancestors: Walk up via parentId

@@ -1,0 +1,308 @@
+openapi: 3.0.3
+info:
+  title: Ankiren Flashcard API
+  description: Decks, Cards, and Reviews API
+  version: 1.0.0
+
+servers:
+  - url: https://ankiren.com
+    description: Production
+  - url: https://staging.ankiren.com
+    description: Staging
+  - url: https://uat.ankiren.com
+    description: UAT
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: next-auth.session-token
+
+  schemas:
+    Deck:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        userId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    DeckWithCards:
+      allOf:
+        - $ref: "#/components/schemas/Deck"
+        - type: object
+          properties:
+            cards:
+              type: array
+              items:
+                $ref: "#/components/schemas/Card"
+
+    Card:
+      type: object
+      properties:
+        id:
+          type: string
+        front:
+          type: string
+        back:
+          type: string
+        deckId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Review:
+      type: object
+      properties:
+        id:
+          type: string
+        easeFactor:
+          type: number
+        interval:
+          type: integer
+        repetitions:
+          type: integer
+        dueDate:
+          type: string
+          format: date-time
+        lastReviewDate:
+          type: string
+          format: date-time
+        cardId:
+          type: string
+        userId:
+          type: string
+
+    CreateDeckRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+    CreateCardRequest:
+      type: object
+      required:
+        - front
+        - back
+        - deckId
+      properties:
+        front:
+          type: string
+        back:
+          type: string
+        deckId:
+          type: string
+
+    SubmitReviewRequest:
+      type: object
+      required:
+        - cardId
+        - quality
+      properties:
+        cardId:
+          type: string
+        quality:
+          type: integer
+          minimum: 0
+          maximum: 5
+          description: "0=Again, 2=Hard, 4=Good, 5=Easy"
+
+security:
+  - bearerAuth: []
+  - cookieAuth: []
+
+paths:
+  /api/decks:
+    get:
+      tags:
+        - Decks
+      summary: List user's decks
+      responses:
+        "200":
+          description: Deck list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  decks:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Deck"
+
+    post:
+      tags:
+        - Decks
+      summary: Create deck
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDeckRequest"
+      responses:
+        "201":
+          description: Deck created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deck"
+
+  /api/decks/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+
+    get:
+      tags:
+        - Decks
+      summary: Get deck with cards
+      responses:
+        "200":
+          description: Deck details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeckWithCards"
+
+    put:
+      tags:
+        - Decks
+      summary: Update deck
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDeckRequest"
+      responses:
+        "200":
+          description: Deck updated
+
+    delete:
+      tags:
+        - Decks
+      summary: Delete deck
+      responses:
+        "200":
+          description: Deck deleted
+
+  /api/cards:
+    post:
+      tags:
+        - Cards
+      summary: Create card
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCardRequest"
+      responses:
+        "201":
+          description: Card created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Card"
+
+  /api/cards/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+
+    get:
+      tags:
+        - Cards
+      summary: Get card
+      responses:
+        "200":
+          description: Card details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Card"
+
+    put:
+      tags:
+        - Cards
+      summary: Update card
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                front:
+                  type: string
+                back:
+                  type: string
+      responses:
+        "200":
+          description: Card updated
+
+    delete:
+      tags:
+        - Cards
+      summary: Delete card
+      responses:
+        "200":
+          description: Card deleted
+
+  /api/reviews:
+    post:
+      tags:
+        - Reviews
+      summary: Submit review
+      description: Submit SM-2 review for a card
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitReviewRequest"
+      responses:
+        "200":
+          description: Review recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+
+tags:
+  - name: Decks
+    description: Deck management
+  - name: Cards
+    description: Card management
+  - name: Reviews
+    description: SM-2 spaced repetition reviews

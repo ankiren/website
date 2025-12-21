@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { authWithPAT } from "@/lib/auth";
 import { getD1, db } from "@/lib/d1";
 import { isAdmin, hasAnyPermission } from "@/lib/authorization";
 
 // GET /api/admin/roles - List all roles
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const session = await auth();
+    const session = await authWithPAT(request);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -49,7 +49,7 @@ export async function GET() {
 // POST /api/admin/roles - Create a new role
 export async function POST(request: Request) {
   try {
-    const session = await auth();
+    const session = await authWithPAT(request);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
