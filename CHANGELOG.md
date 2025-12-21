@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## 0.4.0 - 2025-12-21
 
 ### Added
 - Epic 7: Pomodoro Timer feature implementation
