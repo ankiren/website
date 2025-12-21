@@ -266,8 +266,138 @@ npx wrangler secret put GOOGLE_CLIENT_ID --env uat
 npx wrangler secret put GOOGLE_CLIENT_SECRET --env uat
 ```
 
+## Personal Access Tokens (PAT)
+
+### Overview
+
+Personal Access Tokens provide API authentication without OAuth flow, primarily used for:
+- E2E testing automation
+- CI/CD integrations
+- Third-party tool access
+
+### PAT Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                      PAT Authentication Flow                             │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  ┌─────────────┐     ┌──────────────────┐     ┌────────────────────┐   │
+│  │   Client    │────▶│   API Route      │────▶│   Cloudflare D1    │   │
+│  │  (Request)  │     │  authWithPAT()   │     │ PersonalAccessToken│   │
+│  └─────────────┘     └──────────────────┘     └────────────────────┘   │
+│         │                    │                          │               │
+│         │                    │                          │               │
+│  Authorization:              │                          │               │
+│  Bearer ank_xxx...           │                          │               │
+│         │                    ▼                          ▼               │
+│         │           ┌──────────────────┐      ┌──────────────────┐     │
+│         │           │  SHA-256 Hash    │      │  Token Lookup    │     │
+│         │           │  Token → Hash    │─────▶│  by tokenHash    │     │
+│         │           └──────────────────┘      └──────────────────┘     │
+│         │                                              │                │
+│         │                    ┌──────────────────────────┘               │
+│         │                    ▼                                          │
+│         │           ┌──────────────────┐                               │
+│         │           │ Validate:        │                               │
+│         │           │ - Token exists   │                               │
+│         │           │ - Not expired    │                               │
+│         │           │ - Update lastUsed│                               │
+│         │           └──────────────────┘                               │
+│         │                    │                                          │
+│         ▼                    ▼                                          │
+│  ┌─────────────────────────────────────┐                               │
+│  │     Return User with Roles/Perms    │                               │
+│  │     { user, isPAT: true }           │                               │
+│  └─────────────────────────────────────┘                               │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Token Format
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        Token Structure                               │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  ank_[48 hex characters from 24 random bytes]                       │
+│                                                                      │
+│  Example: ank_a1b2c3d4e5f6...                                       │
+│                                                                      │
+│  Total length: 52 characters (4 prefix + 48 hex)                    │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Token Security
+
+| Aspect | Implementation |
+|--------|----------------|
+| Generation | `crypto.getRandomValues()` (24 bytes) |
+| Storage | SHA-256 hash only (plain token never stored) |
+| Display | Shown once on creation, never retrievable |
+| Validation | Hash comparison + expiry check |
+| Revocation | Immediate via DELETE endpoint |
+
+### PersonalAccessToken Table
+
+```sql
+┌─────────────────────────────────────────────────────────────────────┐
+│                    PersonalAccessToken Table                         │
+├─────────────────┬─────────────────┬─────────────────────────────────┤
+│     Column      │      Type       │           Description           │
+├─────────────────┼─────────────────┼─────────────────────────────────┤
+│ id              │ TEXT (PK)       │ CUID identifier                 │
+│ userId          │ TEXT (FK)       │ Owner reference                 │
+│ name            │ TEXT            │ Token display name              │
+│ tokenHash       │ TEXT            │ SHA-256 hash of token           │
+│ lastUsedAt      │ TEXT            │ Last API call timestamp         │
+│ expiresAt       │ TEXT            │ Optional expiration date        │
+│ createdAt       │ TEXT            │ Creation timestamp              │
+└─────────────────┴─────────────────┴─────────────────────────────────┘
+```
+
+### PAT Indexes
+
+```sql
+CREATE INDEX idx_pat_userId ON PersonalAccessToken(userId);
+CREATE INDEX idx_pat_tokenHash ON PersonalAccessToken(tokenHash);
+```
+
+### Authentication Priority
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    authWithPAT() Flow                                │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  1. Check Authorization header for "Bearer ank_*"                   │
+│     │                                                                │
+│     ├── Found PAT → Validate token                                  │
+│     │              → Return { user, isPAT: true }                   │
+│     │                                                                │
+│     └── Not found → Fall back to session auth                       │
+│                   → Return session or null                          │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Usage Example
+
+```bash
+# Create token via UI at /dashboard/tokens
+# Use token in API requests:
+
+curl -H "Authorization: Bearer ank_your_token_here" \
+     https://ankiren.com/api/me/tokens
+
+# Response: { tokens: [...] }
+```
+
 ## API Endpoints
 
+### Authentication
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET/POST | `/api/auth/[...nextauth]` | NextAuth handler |
@@ -275,6 +405,13 @@ npx wrangler secret put GOOGLE_CLIENT_SECRET --env uat
 | GET | `/api/auth/callback/google` | Google OAuth callback |
 | POST | `/api/auth/signout` | Logout |
 | POST | `/api/register` | Create new user (credentials) |
+
+### Personal Access Tokens
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/me/tokens` | List user's tokens |
+| POST | `/api/me/tokens` | Create new token (returns plain token once) |
+| DELETE | `/api/me/tokens/[id]` | Revoke/delete a token |
 
 ## UI Components
 
@@ -294,6 +431,13 @@ npx wrangler secret put GOOGLE_CLIENT_SECRET --env uat
 - Loading state during authentication
 - Error state for failed attempts
 - Redirect to dashboard on success
+
+### Token Management Page (`/dashboard/tokens`)
+- List existing tokens with name, created date, last used
+- Create new token modal (name, optional expiry)
+- Display new token ONCE with copy button
+- Revoke/delete button for each token
+- Security notice about token access
 
 ## Error Handling
 
@@ -329,11 +473,16 @@ BASE_URL=https://ankiren.com npm run test:e2e
 
 | File | Purpose |
 |------|---------|
-| `src/lib/auth.ts` | NextAuth configuration |
-| `src/lib/d1.ts` | Database operations including user CRUD |
+| `src/lib/auth.ts` | NextAuth config + `authWithPAT()` |
+| `src/lib/d1.ts` | Database operations (user, PAT CRUD) |
 | `src/app/login/page.tsx` | Login UI |
 | `src/app/register/page.tsx` | Registration UI |
 | `src/app/api/auth/[...nextauth]/route.ts` | NextAuth API route |
 | `src/app/api/register/route.ts` | Registration API |
+| `src/app/api/me/tokens/route.ts` | PAT list/create API |
+| `src/app/api/me/tokens/[id]/route.ts` | PAT delete API |
+| `src/app/dashboard/tokens/page.tsx` | Token management UI |
 | `migrations/0002_google_oauth.sql` | OAuth schema migration |
+| `migrations/0006_pat.sql` | PAT schema migration |
 | `e2e/auth.spec.ts` | E2E authentication tests |
+| `e2e/tokens-auth.spec.ts` | E2E PAT tests |

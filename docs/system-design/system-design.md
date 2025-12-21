@@ -145,6 +145,18 @@ User Request (ankiren.com)
 │ userId          │ TEXT (FK)       │ User reference                  │
 │                 │ UNIQUE(cardId, userId)                             │
 └─────────────────┴─────────────────┴─────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                    PersonalAccessToken Table                         │
+├─────────────────┬─────────────────┬─────────────────────────────────┤
+│ id              │ TEXT (PK)       │ CUID identifier                 │
+│ userId          │ TEXT (FK)       │ Owner reference                 │
+│ name            │ TEXT            │ Token display name              │
+│ tokenHash       │ TEXT            │ SHA-256 hash of token           │
+│ lastUsedAt      │ TEXT            │ Last API call timestamp         │
+│ expiresAt       │ TEXT            │ Optional expiration date        │
+│ createdAt       │ TEXT            │ Creation timestamp              │
+└─────────────────┴─────────────────┴─────────────────────────────────┘
 ```
 
 ### 3.3 Database Indexes
@@ -156,6 +168,8 @@ CREATE INDEX idx_card_deckId ON Card(deckId);
 CREATE INDEX idx_review_cardId ON Review(cardId);
 CREATE INDEX idx_review_userId ON Review(userId);
 CREATE INDEX idx_review_dueDate ON Review(dueDate);
+CREATE INDEX idx_pat_userId ON PersonalAccessToken(userId);
+CREATE INDEX idx_pat_tokenHash ON PersonalAccessToken(tokenHash);
 ```
 
 ## 4. Application Architecture
@@ -177,13 +191,15 @@ src/
 │   │   │       ├── page.tsx     # Card list
 │   │   │       ├── cards/new/
 │   │   │       └── study/       # Study session
-│   │   └── cards/[id]/edit/
+│   │   ├── cards/[id]/edit/
+│   │   └── tokens/          # PAT management UI
 │   ├── api/                 # API Routes
 │   │   ├── auth/[...nextauth]/
 │   │   ├── register/
 │   │   ├── decks/
 │   │   ├── cards/
-│   │   └── reviews/
+│   │   ├── reviews/
+│   │   └── me/tokens/       # PAT CRUD API
 │   ├── layout.tsx           # Root layout
 │   └── page.tsx             # Landing page
 ├── components/
@@ -300,11 +316,19 @@ Ease Factor Update:
 |--------|----------|-------------|
 | POST | /api/reviews | Submit review |
 
+### Personal Access Tokens
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /api/me/tokens | List user's tokens |
+| POST | /api/me/tokens | Create token (returns plain token once) |
+| DELETE | /api/me/tokens/[id] | Revoke/delete token |
+
 ## 6. Security
 
 ### 6.1 Authentication & Authorization
 - JWT-based sessions (stateless)
 - Password hashing with bcrypt (10 rounds)
+- Personal Access Tokens (PAT) for API auth
 - Protected routes via middleware
 - User-scoped data access (all queries filter by userId)
 
@@ -312,6 +336,7 @@ Ease Factor Update:
 - CSRF protection via NextAuth
 - Input validation on all endpoints
 - User ownership verification for all mutations
+- PAT tokens: SHA-256 hashed storage, shown once on creation
 
 ### 6.3 Infrastructure Security
 - HTTPS enforced via Cloudflare
