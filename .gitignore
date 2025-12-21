@@ -60,3 +60,5 @@ prisma/dev.db-journal
 
 # Playwright auth state
 e2e/.auth/*.json
+
+tmp
