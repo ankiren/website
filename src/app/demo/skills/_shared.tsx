@@ -240,6 +240,13 @@ export const acceptanceCriteriaData: Record<string, AcceptanceCriteria[]> = {
     { id: "AC-6.2.3", title: "Search Skills", description: "User can search for specific skills" },
     { id: "AC-6.2.4", title: "Skill Details", description: "User can view skill information" },
   ],
+  "US-6-2": [
+    { id: "AC-6.2.1", title: "View My Skills Dashboard", description: "User can view all their tracked skills" },
+    { id: "AC-6.2.2", title: "Add Custom Skill", description: "User can create custom skills with name, icon, color" },
+    { id: "AC-6.2.3", title: "Edit Skill", description: "User can edit their custom skills" },
+    { id: "AC-6.2.4", title: "Delete Skill", description: "User can remove skills from their list" },
+    { id: "AC-6.2.5", title: "Search & Filter", description: "User can search and sort their skills" },
+  ],
   "US-6.3": [
     { id: "AC-6.3.1", title: "Add Skill to Track", description: "User can add a skill to their tracking list" },
     { id: "AC-6.3.2", title: "Record New Score", description: "User can record a score with source and note" },
@@ -277,6 +284,150 @@ export const acceptanceCriteriaData: Record<string, AcceptanceCriteria[]> = {
     { id: "AC-6.8.4", title: "Import Execution", description: "Scores are imported with progress" },
   ],
 };
+
+// =============================================================================
+// Radar Chart Component
+// =============================================================================
+
+interface RadarChartProps {
+  data: { name: string; value: number; icon: string }[];
+  size?: number;
+  color?: string;
+}
+
+export function RadarChart({ data, size = 280, color = "violet" }: RadarChartProps) {
+  const center = size / 2;
+  const radius = size * 0.38;
+  const levels = 5;
+  const angleStep = (2 * Math.PI) / data.length;
+  const startAngle = -Math.PI / 2; // Start from top
+
+  // Calculate point positions for a given value (0-100)
+  const getPoint = (index: number, value: number) => {
+    const angle = startAngle + index * angleStep;
+    const r = (value / 100) * radius;
+    return {
+      x: center + r * Math.cos(angle),
+      y: center + r * Math.sin(angle),
+    };
+  };
+
+  // Generate level circles
+  const levelCircles = Array.from({ length: levels }, (_, i) => {
+    const r = ((i + 1) / levels) * radius;
+    const points = data.map((_, idx) => {
+      const angle = startAngle + idx * angleStep;
+      return `${center + r * Math.cos(angle)},${center + r * Math.sin(angle)}`;
+    }).join(" ");
+    return points;
+  });
+
+  // Generate data polygon
+  const dataPoints = data.map((d, i) => {
+    const point = getPoint(i, d.value);
+    return `${point.x},${point.y}`;
+  }).join(" ");
+
+  // Axis lines
+  const axisLines = data.map((_, i) => {
+    const point = getPoint(i, 100);
+    return { x1: center, y1: center, x2: point.x, y2: point.y };
+  });
+
+  // Label positions (slightly outside the chart)
+  const labelPositions = data.map((d, i) => {
+    const angle = startAngle + i * angleStep;
+    const r = radius + 36;
+    return {
+      x: center + r * Math.cos(angle),
+      y: center + r * Math.sin(angle),
+      name: d.name,
+      value: d.value,
+      icon: d.icon,
+    };
+  });
+
+  const colorClasses: Record<string, { fill: string; stroke: string; text: string }> = {
+    violet: { fill: "fill-violet-500/30", stroke: "stroke-violet-500", text: "text-violet-600" },
+    blue: { fill: "fill-blue-500/30", stroke: "stroke-blue-500", text: "text-blue-600" },
+    emerald: { fill: "fill-emerald-500/30", stroke: "stroke-emerald-500", text: "text-emerald-600" },
+    orange: { fill: "fill-orange-500/30", stroke: "stroke-orange-500", text: "text-orange-600" },
+  };
+
+  const colors = colorClasses[color] || colorClasses.violet;
+
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="overflow-visible">
+        {/* Background levels */}
+        {levelCircles.map((points, i) => (
+          <polygon
+            key={i}
+            points={points}
+            fill="none"
+            stroke="#e5e7eb"
+            strokeWidth="1"
+            className="opacity-60"
+          />
+        ))}
+
+        {/* Axis lines */}
+        {axisLines.map((line, i) => (
+          <line
+            key={i}
+            x1={line.x1}
+            y1={line.y1}
+            x2={line.x2}
+            y2={line.y2}
+            stroke="#d1d5db"
+            strokeWidth="1"
+          />
+        ))}
+
+        {/* Data polygon */}
+        <polygon
+          points={dataPoints}
+          className={`${colors.fill} ${colors.stroke}`}
+          strokeWidth="2.5"
+        />
+
+        {/* Data points */}
+        {data.map((d, i) => {
+          const point = getPoint(i, d.value);
+          return (
+            <circle
+              key={i}
+              cx={point.x}
+              cy={point.y}
+              r="5"
+              className={`${colors.stroke} fill-white`}
+              strokeWidth="2.5"
+            />
+          );
+        })}
+      </svg>
+
+      {/* Labels with icons */}
+      {labelPositions.map((pos, i) => (
+        <div
+          key={i}
+          className="absolute flex flex-col items-center"
+          style={{
+            left: pos.x,
+            top: pos.y,
+            transform: "translate(-50%, -50%)",
+          }}
+        >
+          <div className={`w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center mb-1`}>
+            <SkillIcon name={pos.icon} className={`w-4 h-4 ${colors.text}`} />
+          </div>
+          <span className="text-xs font-semibold text-gray-700">{pos.name}</span>
+          <span className={`text-xs font-bold ${colors.text}`}>{pos.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export function AcceptanceCriteriaSection({ storyId }: { storyId: string }) {
   const criteria = acceptanceCriteriaData[storyId] || [];

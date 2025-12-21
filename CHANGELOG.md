@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- US-6.2 demo implementation with My Skills Dashboard
+  - Custom skill creation with name, icon, color picker
+  - Edit/Delete skill functionality
+  - Search, filter, and sort skills
+  - Multiple persona demos (Buffett, Bill Gates, Steve Jobs, Mozart, etc.)
+  - RadarChart component for skill visualization
 - US-6.1 user story with 7 acceptance criteria (Gherkin format)
 - US-6.1 demo implementation (`src/app/demo/skills/us-6-1/`)
 - Skill detail page demo (`src/app/demo/skills/us-6-1/[id]/`)
