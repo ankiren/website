@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { authWithPAT } from "@/lib/auth";
 import { getD1, db } from "@/lib/d1";
 
 interface RouteParams {
@@ -9,7 +9,7 @@ interface RouteParams {
 // POST /api/courses/[id]/enroll - Join a course
 export async function POST(request: Request, { params }: RouteParams) {
   try {
-    const session = await auth();
+    const session = await authWithPAT(request);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -76,7 +76,7 @@ export async function POST(request: Request, { params }: RouteParams) {
 // DELETE /api/courses/[id]/enroll - Leave a course
 export async function DELETE(request: Request, { params }: RouteParams) {
   try {
-    const session = await auth();
+    const session = await authWithPAT(request);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

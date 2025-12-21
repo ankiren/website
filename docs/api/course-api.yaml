@@ -1,0 +1,224 @@
+openapi: 3.0.3
+info:
+  title: Ankiren Course API
+  description: Course Management and Enrollment API
+  version: 1.0.0
+
+servers:
+  - url: https://ankiren.com
+    description: Production
+  - url: https://staging.ankiren.com
+    description: Staging
+  - url: https://uat.ankiren.com
+    description: UAT
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: next-auth.session-token
+
+  schemas:
+    Course:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [draft, published, archived]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Enrollment:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        courseId:
+          type: string
+        status:
+          type: string
+          enum: [active, completed, dropped]
+        enrolledAt:
+          type: string
+          format: date-time
+
+    CreateCourseRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [draft, published]
+
+security:
+  - bearerAuth: []
+  - cookieAuth: []
+
+paths:
+  /api/courses:
+    get:
+      tags:
+        - Courses (Public)
+      summary: List published courses
+      responses:
+        "200":
+          description: Course list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  courses:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Course"
+
+  /api/courses/{id}/enroll:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+
+    post:
+      tags:
+        - Courses (Public)
+      summary: Enroll in course
+      responses:
+        "201":
+          description: Enrolled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Enrollment"
+        "400":
+          description: Already enrolled
+
+  /api/me/enrollments:
+    get:
+      tags:
+        - Courses (Public)
+      summary: List my enrollments
+      responses:
+        "200":
+          description: Enrollment list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  enrollments:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Enrollment"
+
+  /api/admin/courses:
+    get:
+      tags:
+        - Courses (Admin)
+      summary: List all courses
+      responses:
+        "200":
+          description: Course list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  courses:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Course"
+        "403":
+          description: Forbidden
+
+    post:
+      tags:
+        - Courses (Admin)
+      summary: Create course
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCourseRequest"
+      responses:
+        "201":
+          description: Course created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Course"
+        "403":
+          description: Forbidden
+
+  /api/admin/courses/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+
+    get:
+      tags:
+        - Courses (Admin)
+      summary: Get course
+      responses:
+        "200":
+          description: Course details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Course"
+
+    put:
+      tags:
+        - Courses (Admin)
+      summary: Update course
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCourseRequest"
+      responses:
+        "200":
+          description: Course updated
+
+    delete:
+      tags:
+        - Courses (Admin)
+      summary: Delete course
+      responses:
+        "200":
+          description: Course deleted
+
+tags:
+  - name: Courses (Public)
+    description: Public course operations
+  - name: Courses (Admin)
+    description: Admin course management

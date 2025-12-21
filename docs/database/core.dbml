@@ -1,0 +1,92 @@
+// Core Flashcard Database Schema
+// DBML Documentation: https://dbml.dbdiagram.io/docs
+
+Project core {
+  database_type: 'SQLite'
+  Note: 'Core flashcard tables for Ankiren'
+}
+
+// =============================================================================
+// TABLES
+// =============================================================================
+
+Table User {
+  id TEXT [pk, note: 'CUID identifier']
+  email TEXT [unique, not null, note: 'User email']
+  password TEXT [note: 'bcrypt hashed (null for OAuth)']
+  name TEXT [note: 'Display name']
+  image TEXT [note: 'Profile picture URL (OAuth)']
+  googleId TEXT [unique, note: 'Google OAuth provider ID']
+  createdAt TEXT [not null, default: `datetime('now')`, note: 'ISO timestamp']
+  updatedAt TEXT [not null, default: `datetime('now')`, note: 'ISO timestamp']
+
+  indexes {
+    email [unique]
+    googleId
+  }
+
+  Note: 'User accounts (credentials or OAuth)'
+}
+
+Table Deck {
+  id TEXT [pk, note: 'CUID identifier']
+  name TEXT [not null, note: 'Deck name']
+  description TEXT [note: 'Optional description']
+  userId TEXT [not null, ref: > User.id, note: 'Owner reference']
+  createdAt TEXT [not null, default: `datetime('now')`, note: 'ISO timestamp']
+  updatedAt TEXT [not null, default: `datetime('now')`, note: 'ISO timestamp']
+
+  indexes {
+    userId
+  }
+
+  Note: 'Flashcard decks owned by users'
+}
+
+Table Card {
+  id TEXT [pk, note: 'CUID identifier']
+  front TEXT [not null, note: 'Question/front content']
+  back TEXT [not null, note: 'Answer/back content']
+  deckId TEXT [not null, ref: > Deck.id, note: 'Parent deck reference']
+  createdAt TEXT [not null, default: `datetime('now')`, note: 'ISO timestamp']
+  updatedAt TEXT [not null, default: `datetime('now')`, note: 'ISO timestamp']
+
+  indexes {
+    deckId
+  }
+
+  Note: 'Individual flashcards within decks'
+}
+
+Table Review {
+  id TEXT [pk, note: 'CUID identifier']
+  easeFactor REAL [not null, default: 2.5, note: 'SM-2 ease factor']
+  interval INTEGER [not null, default: 0, note: 'Days until next review']
+  repetitions INTEGER [not null, default: 0, note: 'Successful review count']
+  dueDate TEXT [note: 'Next review date']
+  lastReviewDate TEXT [note: 'Last reviewed timestamp']
+  cardId TEXT [not null, ref: > Card.id, note: 'Card reference']
+  userId TEXT [not null, ref: > User.id, note: 'User reference']
+
+  indexes {
+    (cardId, userId) [unique]
+    cardId
+    userId
+    dueDate
+  }
+
+  Note: 'SM-2 spaced repetition review state'
+}
+
+// =============================================================================
+// RELATIONSHIPS
+// =============================================================================
+
+// User -> Deck (One-to-Many)
+// A user can have multiple decks
+
+// Deck -> Card (One-to-Many)
+// A deck contains multiple cards
+
+// Card + User -> Review (One-to-One per user)
+// Each card has one review state per user

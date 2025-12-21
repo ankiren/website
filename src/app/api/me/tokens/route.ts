@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { authWithPAT } from "@/lib/auth";
 import { getD1, db, generatePAT } from "@/lib/d1";
 
 // GET /api/me/tokens - List user's tokens
-export async function GET() {
-  const session = await auth();
+export async function GET(request: Request) {
+  const session = await authWithPAT(request);
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -26,7 +26,7 @@ export async function GET() {
 
 // POST /api/me/tokens - Create a new token
 export async function POST(request: Request) {
-  const session = await auth();
+  const session = await authWithPAT(request);
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

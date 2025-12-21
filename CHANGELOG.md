@@ -15,6 +15,17 @@ All notable changes to this project will be documented in this file.
   - E2E tests for courses (33 tests)
 - Courses link in navbar for authenticated users
 - Course quick link in admin dashboard
+- Epic 9: Personal Access Tokens (PAT) feature
+  - Token management UI (`/dashboard/tokens`)
+  - PAT CRUD API endpoints (`/api/me/tokens`)
+  - Bearer token authentication via `authWithPAT()`
+  - SHA-256 hashed token storage
+  - E2E tests for PAT (16 tests)
+- API documentation (OpenAPI v3 specs in `docs/api/`)
+- Database documentation (DBML schemas in `docs/database/`)
+
+### Changed
+- All API routes now support PAT authentication via Bearer token
 
 ## 0.4.0 - 2025-12-21
 

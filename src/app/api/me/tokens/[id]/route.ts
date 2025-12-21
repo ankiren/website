@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { authWithPAT } from "@/lib/auth";
 import { getD1, db } from "@/lib/d1";
 
 // DELETE /api/me/tokens/[id] - Revoke/delete a token
@@ -7,7 +7,7 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
+  const session = await authWithPAT(request);
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

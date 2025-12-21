@@ -286,42 +286,15 @@ Ease Factor Update:
 
 ## 5. API Endpoints
 
-### Authentication
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | /api/register | Create new user |
-| POST | /api/auth/callback/credentials | Email/password login |
-| GET | /api/auth/callback/google | Google OAuth callback |
-| POST | /api/auth/signout | Logout |
+See [docs/api/](../api/) for OpenAPI v3 specifications:
 
-### Decks
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | /api/decks | List user's decks |
-| POST | /api/decks | Create deck |
-| GET | /api/decks/[id] | Get deck with cards |
-| PUT | /api/decks/[id] | Update deck |
-| DELETE | /api/decks/[id] | Delete deck |
-
-### Cards
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | /api/cards | Create card |
-| GET | /api/cards/[id] | Get card |
-| PUT | /api/cards/[id] | Update card |
-| DELETE | /api/cards/[id] | Delete card |
-
-### Reviews
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | /api/reviews | Submit review |
-
-### Personal Access Tokens
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | /api/me/tokens | List user's tokens |
-| POST | /api/me/tokens | Create token (returns plain token once) |
-| DELETE | /api/me/tokens/[id] | Revoke/delete token |
+| Spec | Description |
+|------|-------------|
+| [flashcard-api.yaml](../api/flashcard-api.yaml) | Decks, Cards, Reviews |
+| [auth-api.yaml](../api/auth-api.yaml) | Authentication & PAT |
+| [authorization-api.yaml](../api/authorization-api.yaml) | Roles, Permissions, Users |
+| [course-api.yaml](../api/course-api.yaml) | Courses & Enrollments |
+| [skill-api.yaml](../api/skill-api.yaml) | Skills Management |
 
 ## 6. Security
 

@@ -1,0 +1,62 @@
+// Course Management Database Schema
+// DBML Documentation: https://dbml.dbdiagram.io/docs
+
+Project courses {
+  database_type: 'SQLite'
+  Note: 'Course and enrollment tables for Ankiren'
+}
+
+// =============================================================================
+// TABLES
+// =============================================================================
+
+Table Course {
+  id TEXT [pk, note: 'CUID identifier']
+  name TEXT [not null, note: 'Course name']
+  description TEXT [note: 'Course description']
+  status TEXT [not null, default: 'draft', note: 'draft | published | archived']
+  createdAt TEXT [not null, default: `datetime('now')`, note: 'ISO timestamp']
+  updatedAt TEXT [not null, default: `datetime('now')`, note: 'ISO timestamp']
+
+  indexes {
+    status
+  }
+
+  Note: 'Learning courses (admin-managed)'
+}
+
+Table Enrollment {
+  id TEXT [pk, note: 'CUID identifier']
+  userId TEXT [not null, ref: > User.id, note: 'Enrolled user']
+  courseId TEXT [not null, ref: > Course.id, note: 'Course reference']
+  status TEXT [not null, default: 'active', note: 'active | completed | dropped']
+  enrolledAt TEXT [not null, default: `datetime('now')`, note: 'Enrollment date']
+
+  indexes {
+    (userId, courseId) [unique]
+    userId
+    courseId
+  }
+
+  Note: 'User course enrollments'
+}
+
+// =============================================================================
+// REFERENCE TABLES
+// =============================================================================
+
+Table User {
+  id TEXT [pk]
+  email TEXT [unique, not null]
+  name TEXT
+
+  Note: 'Reference: see core.dbml'
+}
+
+// =============================================================================
+// RELATIONSHIPS
+// =============================================================================
+
+// User <-> Course (Many-to-Many via Enrollment)
+// A user can enroll in multiple courses
+// A course can have multiple enrolled users

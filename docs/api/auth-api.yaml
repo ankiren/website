@@ -1,0 +1,211 @@
+openapi: 3.0.3
+info:
+  title: Ankiren Auth API
+  description: Authentication and Personal Access Tokens API
+  version: 1.0.0
+
+servers:
+  - url: https://ankiren.com
+    description: Production
+  - url: https://staging.ankiren.com
+    description: Staging
+  - url: https://uat.ankiren.com
+    description: UAT
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Personal Access Token (ank_xxx)
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: next-auth.session-token
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        image:
+          type: string
+          nullable: true
+
+    Token:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        lastUsedAt:
+          type: string
+          format: date-time
+          nullable: true
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateTokenRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    CreateTokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: Plain token (shown once, starts with ank_)
+          example: "ank_a1b2c3d4e5f6..."
+        id:
+          type: string
+
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - name
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        name:
+          type: string
+
+security:
+  - bearerAuth: []
+  - cookieAuth: []
+
+paths:
+  /api/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/me/tokens:
+    get:
+      tags:
+        - Personal Access Tokens
+      summary: List my tokens
+      responses:
+        "200":
+          description: Token list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tokens:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Token"
+        "401":
+          description: Unauthorized
+
+    post:
+      tags:
+        - Personal Access Tokens
+      summary: Create new token
+      description: Returns plain token once. Store it securely.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTokenRequest"
+      responses:
+        "201":
+          description: Token created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateTokenResponse"
+        "400":
+          description: Validation error
+        "401":
+          description: Unauthorized
+
+  /api/me/tokens/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+
+    delete:
+      tags:
+        - Personal Access Tokens
+      summary: Revoke token
+      responses:
+        "200":
+          description: Token revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        "401":
+          description: Unauthorized
+        "404":
+          description: Token not found
+
+tags:
+  - name: Authentication
+    description: User registration and login
+  - name: Personal Access Tokens
+    description: API token management
