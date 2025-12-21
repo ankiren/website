@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## 0.4.1 - 2025-12-21
+
 ### Added
 - Epic 8: Course Management feature
   - Admin course management UI (`/dashboard/admin/courses`)
